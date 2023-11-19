@@ -1,4 +1,5 @@
 import { dockToStarbase } from "../actions/dockToStarbase";
+import { exitWarp } from "../actions/exitWarp";
 import { loadCargo } from "../actions/loadCargo";
 import { loadFuel } from "../actions/loadFuel";
 import { undockFromStarbase } from "../actions/undockFromStarbase";
@@ -16,12 +17,16 @@ const run = async () => {
       await actionWrapper(loadFuel, fleetName, 168039);
       await actionWrapper(undockFromStarbase, fleetName);
       await actionWrapper(warpToSector, fleetName, 0, 10, 100, 300, true);
+      await actionWrapper(exitWarp, fleetName);
       await actionWrapper(warpToSector, fleetName, 2, 6, 63, 300, true);
+      await actionWrapper(exitWarp, fleetName);
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(loadCargo, fleetName, Resources.Carbon, 208350);
       await actionWrapper(undockFromStarbase, fleetName);
       await actionWrapper(warpToSector, fleetName, 0, -10, 100, 300, true);
+      await actionWrapper(exitWarp, fleetName);
       await actionWrapper(warpToSector, fleetName, -2, -6, 63, 300, true);
+      await actionWrapper(exitWarp, fleetName);
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(unloadCargo, fleetName, Resources.Carbon, 208350);
       await sendNotification(NotificationMessage.CARGO_SUCCESS);

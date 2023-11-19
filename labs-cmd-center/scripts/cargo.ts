@@ -7,6 +7,22 @@ import { SageGameHandler } from "../src/sageGameHandler";
 
 const FLEET_NAME = "Flotta DELTA";
 
+type LabsAction<R, A extends any[]> = (...args: A) => Promise<R>;
+
+async function actionWrapper<R, A extends any[]>(
+  func: LabsAction<R, A>,
+  ...args: A
+): Promise<R> {
+  while (true) {
+    try {
+      return await func(...args);
+    } catch (error) {
+      console.error(`Attempt failed:`, error);
+      await new Promise((resolve) => setTimeout(resolve, 60000));
+    }
+  }
+}
+
 const setupWallet = async () => {
   const rpc_url = Bun.env.SOLANA_RPC_URL ?? "http://localhost:8899";
   const connection = new Connection(rpc_url, "confirmed");
@@ -64,6 +80,30 @@ const sendSuccessNotification = async () => {
   }
 };
 
+const sendErrorNotification = async () => {
+  const url = Bun.env.MAKE_HOOK as string;
+  const payload = { message: "Si è verificato un ERRORE durante il TRASPORTO" };
+  const headers = { "Content-Type": "application/json" };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: headers,
+      body: JSON.stringify(payload),
+    });
+
+    if (response.status === 200) {
+      console.log("Notification sent successfully.");
+    } else {
+      console.log(
+        `Failed to send notification. Status code: ${response.status}`
+      );
+    }
+  } catch (error) {
+    console.error("Error sending notification:", error);
+  }
+};
+
 let ix;
 let tx;
 let rx;
@@ -77,7 +117,8 @@ const loadFuel = async (
   // Get the fleet account
   let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
   if (fleetAccount.state.StarbaseLoadingBay) {
-    console.log("Prepare to load fuel to fleet...");
+    console.log(" ");
+    console.log("Loading fuel to fleet...");
     const mintToken = sageGameHandler.mints?.fuel as PublicKey;
     const fuelTankToKey = fleetAccount.data.fuelTank;
 
@@ -102,7 +143,8 @@ const loadCargo = async (
   // Get the fleet account
   let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
   if (fleetAccount.state.StarbaseLoadingBay) {
-    console.log("Prepare to load cargo to fleet...");
+    console.log(" ");
+    console.log("Loading cargo to fleet...");
     const mintToken = sageGameHandler.getResourceMintAddress("carbon");
     const cargoPodToKey = fleetAccount.data.cargoHold;
 
@@ -127,7 +169,8 @@ const unloadCargo = async (
   // Get the fleet account
   let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
   if (fleetAccount.state.StarbaseLoadingBay) {
-    console.log("Prepare to unload cargo from fleet...");
+    console.log(" ");
+    console.log("Unloading cargo from fleet...");
     const mintToken = sageGameHandler.getResourceMintAddress("carbon");
     ix = await sageFleetHandler.ixWithdrawCargoFromFleet(
       fleetPubkey,
@@ -146,7 +189,8 @@ const dock = async (
   fleetPubkey: PublicKey
 ) => {
   // Instruct the fleet to dock to the starbase
-  console.log("Prepare to dock to starbase...");
+  console.log(" ");
+  console.log("Docking to starbase...");
   ix = await sageFleetHandler.ixDockToStarbase(fleetPubkey);
   tx = await sageGameHandler.buildAndSignTransaction(ix);
   rx = await sageGameHandler.sendTransaction(tx);
@@ -159,7 +203,8 @@ const undock = async (
   fleetPubkey: PublicKey
 ) => {
   // Instruct the fleet to dock to the starbase
-  console.log("Prepare to undock from starbase...");
+  console.log(" ");
+  console.log("Undocking from starbase...");
   ix = await sageFleetHandler.ixUndockFromStarbase(fleetPubkey);
   tx = await sageGameHandler.buildAndSignTransaction(ix);
   rx = await sageGameHandler.sendTransaction(tx);
@@ -178,7 +223,8 @@ const warp = async (
 ) => {
   // Get the fleet account
   let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
-  console.log(`Start warp with ${FLEET_NAME}...`);
+  console.log(" ");
+  console.log(`Start warp...`);
   // Check that the fleet is idle, abort if not
   if (!fleetAccount.state.Idle) {
     throw Error("fleet is expected to be idle before warping");
@@ -225,7 +271,7 @@ const warp = async (
   fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
   console.log(`Fleet state: ${JSON.stringify(fleetAccount.state)}`);
 
-  console.log(`Stop warp with ${FLEET_NAME}...`);
+  console.log(`Stop warp...`);
   if (waitCooldown) {
     console.log(`Waiting for ${cooldown} seconds...`);
     await new Promise((resolve) => setTimeout(resolve, cooldown * 1000));
@@ -252,54 +298,91 @@ const run = async () => {
   console.log(`Fleet address: ${fleetPubkey.toBase58()}`);
 
   while (true) {
-    await loadFuel(sageGameHandler, sageFleetHandler, fleetPubkey, 168039);
-    await undock(sageGameHandler, sageFleetHandler, fleetPubkey);
-    await warp(
-      sageGameHandler,
-      sageFleetHandler,
-      fleetPubkey,
-      0,
-      10,
-      100,
-      300,
-      true
-    );
-    await warp(
-      sageGameHandler,
-      sageFleetHandler,
-      fleetPubkey,
-      2,
-      6,
-      63,
-      300,
-      true
-    );
-    await dock(sageGameHandler, sageFleetHandler, fleetPubkey);
-    await loadCargo(sageGameHandler, sageFleetHandler, fleetPubkey, 208350);
-    await undock(sageGameHandler, sageFleetHandler, fleetPubkey);
-    await warp(
-      sageGameHandler,
-      sageFleetHandler,
-      fleetPubkey,
-      0,
-      -10,
-      100,
-      300,
-      true
-    );
-    await warp(
-      sageGameHandler,
-      sageFleetHandler,
-      fleetPubkey,
-      -2,
-      -6,
-      63,
-      300,
-      true
-    );
-    await dock(sageGameHandler, sageFleetHandler, fleetPubkey);
-    await unloadCargo(sageGameHandler, sageFleetHandler, fleetPubkey, 208350);
-    sendSuccessNotification();
+    try {
+      await actionWrapper(
+        loadFuel,
+        sageGameHandler,
+        sageFleetHandler,
+        fleetPubkey,
+        168039
+      );
+      await actionWrapper(
+        undock,
+        sageGameHandler,
+        sageFleetHandler,
+        fleetPubkey
+      );
+      await actionWrapper(
+        warp,
+        sageGameHandler,
+        sageFleetHandler,
+        fleetPubkey,
+        0,
+        10,
+        100,
+        300,
+        true
+      );
+      await actionWrapper(
+        warp,
+        sageGameHandler,
+        sageFleetHandler,
+        fleetPubkey,
+        2,
+        6,
+        63,
+        300,
+        true
+      );
+      await actionWrapper(dock, sageGameHandler, sageFleetHandler, fleetPubkey);
+      await actionWrapper(
+        loadCargo,
+        sageGameHandler,
+        sageFleetHandler,
+        fleetPubkey,
+        208350
+      );
+      await actionWrapper(
+        undock,
+        sageGameHandler,
+        sageFleetHandler,
+        fleetPubkey
+      );
+      await actionWrapper(
+        warp,
+        sageGameHandler,
+        sageFleetHandler,
+        fleetPubkey,
+        0,
+        -10,
+        100,
+        300,
+        true
+      );
+      await actionWrapper(
+        warp,
+        sageGameHandler,
+        sageFleetHandler,
+        fleetPubkey,
+        -2,
+        -6,
+        63,
+        300,
+        true
+      );
+      await actionWrapper(dock, sageGameHandler, sageFleetHandler, fleetPubkey);
+      await actionWrapper(
+        unloadCargo,
+        sageGameHandler,
+        sageFleetHandler,
+        fleetPubkey,
+        208350
+      );
+
+      sendSuccessNotification();
+    } catch (e) {
+      sendErrorNotification();
+    }
   }
 };
 

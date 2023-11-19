@@ -514,8 +514,6 @@ export class SageFleetHandler {
 
     amount = BN.min(new BN(amount), new BN(tokenAccountFrom.amount));
 
-    console.log(amount);
-
     const cargoType = this._gameHandler.getCargoTypeAddress(tokenMint);
     const cargoStatsDefinition = this._gameHandler
       .cargoStatsDefinition as PublicKey;

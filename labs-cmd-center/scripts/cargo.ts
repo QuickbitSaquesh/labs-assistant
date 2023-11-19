@@ -10,7 +10,7 @@ import { actionWrapper } from "../utils/actionWrapper";
 import { sendNotification } from "./../utils/sendNotification";
 
 const run = async () => {
-  const fleetName = Bun.env.CARGO_FLEET as string;
+  const fleetName = Bun.env.CARGO_FLEET_NAME as string;
   while (true) {
     try {
       await actionWrapper(loadFuel, fleetName, 168039);

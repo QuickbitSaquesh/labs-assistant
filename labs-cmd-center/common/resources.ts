@@ -1,4 +1,8 @@
 export enum Resources {
+  Food = "food",
+  Fuel = "fuel",
+  Ammo = "ammo",
+  Tool = "tool",
   Arco = "arco",
   Biomass = "biomass",
   Carbon = "carbon",

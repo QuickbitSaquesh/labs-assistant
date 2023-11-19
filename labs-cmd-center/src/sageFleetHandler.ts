@@ -507,6 +507,9 @@ export class SageFleetHandler {
         tokenAccountTo.mint.toBase58() ===
         this._gameHandler.mints?.fuel.toBase58()
           ? new BN(fleetStats.fuelCapacity)
+          : tokenAccountTo.mint.toBase58() ===
+            this._gameHandler.mints?.ammo.toBase58()
+          ? new BN(fleetStats.ammoCapacity)
           : new BN(fleetStats.cargoCapacity);
 
       const freeCargo: BN = maxCargo.sub(currentCargo);

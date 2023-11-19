@@ -299,7 +299,7 @@ const run = async () => {
   );
   console.log(`Fleet address: ${fleetPubkey.toBase58()}`);
 
-  while (true) {
+  /*   while (true) {
     try {
       await actionWrapper(
         loadFuel,
@@ -372,20 +372,20 @@ const run = async () => {
         300,
         true
       );
-      await actionWrapper(dock, sageGameHandler, sageFleetHandler, fleetPubkey);
-      await actionWrapper(
-        unloadCargo,
-        sageGameHandler,
-        sageFleetHandler,
-        fleetPubkey,
-        208350
-      );
+      await actionWrapper(dock, sageGameHandler, sageFleetHandler, fleetPubkey); */
+  await actionWrapper(
+    unloadCargo,
+    sageGameHandler,
+    sageFleetHandler,
+    fleetPubkey,
+    208350
+  );
 
-      sendSuccessNotification();
+  /*      sendSuccessNotification();
     } catch (e) {
       sendErrorNotification();
     }
-  }
+  } */
 };
 
 run().catch((err) => {

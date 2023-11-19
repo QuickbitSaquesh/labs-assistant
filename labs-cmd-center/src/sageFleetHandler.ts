@@ -637,7 +637,9 @@ export class SageFleetHandler {
     }
 
     amount =
-      amount > tokenAccount.amount ? new BN(tokenAccount.amount) : amount;
+      amount > tokenAccount.amount
+        ? new BN(tokenAccount.amount)
+        : new BN(amount);
 
     const cargoType = this._gameHandler.getCargoTypeAddress(tokenMint);
     const cargoStatsDefinition = this._gameHandler

@@ -252,8 +252,9 @@ const warp = async (
 
   // Get the fleet account
   fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
-  console.log(`Fleet state: ${JSON.stringify(fleetAccount.state)}`);
+  //console.log(`Fleet state: ${JSON.stringify(fleetAccount.state)}`);
 
+  console.log(" ");
   console.log(`Waiting for ${time} seconds...`);
   await new Promise((resolve) => setTimeout(resolve, time * 1000));
 
@@ -269,8 +270,9 @@ const warp = async (
 
   // Get the fleet account
   fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
-  console.log(`Fleet state: ${JSON.stringify(fleetAccount.state)}`);
+  //console.log(`Fleet state: ${JSON.stringify(fleetAccount.state)}`);
 
+  console.log(" ");
   console.log(`Stop warp...`);
   if (waitCooldown) {
     console.log(`Waiting for ${cooldown} seconds...`);

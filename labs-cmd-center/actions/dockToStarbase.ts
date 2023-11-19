@@ -15,7 +15,12 @@ export const dockToStarbase = async (fleetName: string) => {
 
   let ix = await sageFleetHandler.ixDockToStarbase(fleetPubkey);
   let tx = await sageGameHandler.buildAndSignTransaction(ix);
-  await sageGameHandler.sendTransaction(tx);
+  let rx = await sageGameHandler.sendTransaction(tx);
+
+  // Check that the transaction was a success, if not abort
+  if (!rx.value.isOk()) {
+    throw Error("Fleet failed to dock to starbase");
+  }
 
   console.log("Fleet docked!");
 };

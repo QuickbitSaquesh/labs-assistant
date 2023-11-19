@@ -428,7 +428,9 @@ export class SageFleetHandler {
 
     // is fleet in starbase and the game is loaded?
     if (!fleetAccount.state.StarbaseLoadingBay && !this._gameHandler.game) {
-      throw "fleet is not at starbase loading bay (or game is not loaded)";
+      throw Error(
+        "Fleet is not at starbase loading bay (or game is not loaded)"
+      );
     }
 
     const ixs: InstructionReturn[] = [];
@@ -482,7 +484,7 @@ export class SageFleetHandler {
         tokenAccountFrom.mint.toBase58() === tokenMint.toBase58()
     );
     if (!tokenAccountFrom) {
-      throw "from token account not found";
+      throw Error("from token account not found");
     }
 
     // TODO: refactor this and along with `ixDepositCargoToFleet`
@@ -574,7 +576,9 @@ export class SageFleetHandler {
 
     // TODO: ensure fleet state is "StarbaseLoadingBay" - is there a better way to do this?
     if (!fleetAccount.state.StarbaseLoadingBay && !this._gameHandler.game) {
-      throw "fleet is not at starbase loading bay (or game is not loaded)";
+      throw Error(
+        "Fleet is not at starbase loading bay (or game is not loaded)"
+      );
     }
 
     const ixs: InstructionReturn[] = [];

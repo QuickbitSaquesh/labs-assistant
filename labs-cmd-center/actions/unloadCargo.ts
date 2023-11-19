@@ -29,7 +29,12 @@ export const unloadCargo = async (
       amount
     );
     let tx = await sageGameHandler.buildAndSignTransaction(ix);
-    await sageGameHandler.sendTransaction(tx);
+    let rx = await sageGameHandler.sendTransaction(tx);
+
+    // Check that the transaction was a success, if not abort
+    if (!rx.value.isOk()) {
+      throw Error("Fleet failed to unload cargo");
+    }
 
     console.log("Fleet cargo unloaded!");
   }

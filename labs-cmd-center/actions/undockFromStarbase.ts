@@ -15,7 +15,12 @@ export const undockFromStarbase = async (fleetName: string) => {
 
   let ix = await sageFleetHandler.ixUndockFromStarbase(fleetPubkey);
   let tx = await sageGameHandler.buildAndSignTransaction(ix);
-  await sageGameHandler.sendTransaction(tx);
+  let rx = await sageGameHandler.sendTransaction(tx);
+
+  // Check that the transaction was a success, if not abort
+  if (!rx.value.isOk()) {
+    throw Error("Fleet failed to undock from starbase");
+  }
 
   console.log("Fleet undocked!");
 };

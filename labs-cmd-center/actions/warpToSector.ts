@@ -19,14 +19,15 @@ export const warpToSector = async (
 
   // Get the fleet account
   let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
+  //console.log(`Fleet state: ${JSON.stringify(fleetAccount.state)}`);
 
   console.log(" ");
   console.log(`Start warp...`);
 
   // Check that the fleet is idle, abort if not
-  if (!fleetAccount.state.Idle) {
+  /* if (!fleetAccount.state.Idle) {
     throw Error("fleet is expected to be idle before warping");
-  }
+  } */
 
   // Warp the fleet
   const sectorFrom = fleetAccount.state.Idle?.sector as [BN, BN]; // [0, 0]
@@ -35,8 +36,8 @@ export const warpToSector = async (
     sectorFrom[1].add(new BN(y)),
   ]; // [1, 1]
 
-  console.log(`Warp From - X: ${sectorFrom[0]} | Y: ${sectorFrom[1]}`);
-  console.log(`Warp To - X: ${sectorTo[0]} | Y: ${sectorTo[1]}`);
+  console.log(`Warp from - X: ${sectorFrom[0]} | Y: ${sectorFrom[1]}`);
+  console.log(`Warp to - X: ${sectorTo[0]} | Y: ${sectorTo[1]}`);
 
   // Instruct the fleet to warp to coordinate
   let ix = await sageFleetHandler.ixWarpToCoordinate(fleetPubkey, sectorTo);
@@ -45,36 +46,18 @@ export const warpToSector = async (
 
   // Check that the transaction was a success, if not abort
   if (!rx.value.isOk()) {
-    throw Error("fleet failed to warp");
+    throw Error("Fleet failed to warp");
   }
-
-  // Get the fleet account (update)
-  fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
-  //console.log(`Fleet state: ${JSON.stringify(fleetAccount.state)}`);
 
   console.log(" ");
   console.log(`Waiting for ${time} seconds...`);
   await new Promise((resolve) => setTimeout(resolve, time * 1000));
 
-  // Instruct the fleet to exit warp
-  ix = await sageFleetHandler.ixReadyToExitWarp(fleetPubkey);
-  tx = await sageGameHandler.buildAndSignTransaction(ix);
-  rx = await sageGameHandler.sendTransaction(tx);
-
-  // Check that the transaction was a success, if not abort
-  if (!rx.value.isOk()) {
-    throw Error("fleet failed to exit warp");
-  }
-
-  // Get the fleet account (update)
-  fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
-  //console.log(`Fleet state: ${JSON.stringify(fleetAccount.state)}`);
-
   console.log(" ");
-  console.log(`Stop warp...`);
+  console.log(`Warp completed!`);
 
   if (waitCooldown) {
-    console.log(`Waiting for ${cooldown} seconds...`);
+    console.log(`Waiting for ${cooldown} seconds (cooldown)...`);
     await new Promise((resolve) => setTimeout(resolve, cooldown * 1000));
   }
 };

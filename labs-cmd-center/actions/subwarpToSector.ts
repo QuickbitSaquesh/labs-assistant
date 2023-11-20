@@ -1,13 +1,11 @@
 import { BN } from "@project-serum/anchor";
 import { sageProvider } from "../utils/sageProvider";
 
-export const warpToSector = async (
+export const subwarpToSector = async (
   fleetName: string,
   x: number,
   y: number,
-  time: number,
-  cooldown: number,
-  waitCooldown: boolean
+  time: number
 ) => {
   const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
     await sageProvider();
@@ -22,7 +20,7 @@ export const warpToSector = async (
   //console.log(`Fleet state: ${JSON.stringify(fleetAccount.state)}`);
 
   console.log(" ");
-  console.log(`Start warp...`);
+  console.log(`Start subwarp...`);
 
   // Check that the fleet is idle, abort if not
   /* if (!fleetAccount.state.Idle) {
@@ -36,26 +34,21 @@ export const warpToSector = async (
     sectorFrom[1].add(new BN(y)),
   ]; // [1, 1]
 
-  console.log(`Warp from - X: ${sectorFrom[0]} | Y: ${sectorFrom[1]}`);
-  console.log(`Warp to - X: ${sectorTo[0]} | Y: ${sectorTo[1]}`);
+  console.log(`Subwarp from - X: ${sectorFrom[0]} | Y: ${sectorFrom[1]}`);
+  console.log(`Subwarp to - X: ${sectorTo[0]} | Y: ${sectorTo[1]}`);
 
-  // Instruct the fleet to warp to coordinate
-  let ix = await sageFleetHandler.ixWarpToCoordinate(fleetPubkey, sectorTo);
+  // Instruct the fleet to subwarp to coordinate
+  let ix = await sageFleetHandler.ixSubwarpToCoordinate(fleetPubkey, sectorTo);
   let tx = await sageGameHandler.buildAndSignTransaction(ix);
   let rx = await sageGameHandler.sendTransaction(tx);
 
   // Check that the transaction was a success, if not abort
   if (!rx.value.isOk()) {
-    throw Error("Fleet failed to warp");
+    throw Error("Fleet failed to subwarp");
   }
 
   console.log(`Waiting for ${time} seconds...`);
   await new Promise((resolve) => setTimeout(resolve, time * 1000));
 
-  console.log(`Warp completed!`);
-
-  if (waitCooldown) {
-    console.log(`Waiting for ${cooldown} seconds (cooldown)...`);
-    await new Promise((resolve) => setTimeout(resolve, cooldown * 1000));
-  }
+  console.log(`Subwarp completed!`);
 };

@@ -14,21 +14,21 @@ const run = async () => {
   const fleetName = Bun.env.CARGO_FLEET_NAME as string;
   while (true) {
     try {
-      await actionWrapper(loadFuel, fleetName, 168039);
+      await actionWrapper(loadFuel, fleetName, 131241);
       await actionWrapper(undockFromStarbase, fleetName);
       await actionWrapper(warpToSector, fleetName, 0, 10, 100, 300, true);
       await actionWrapper(exitWarp, fleetName);
       await actionWrapper(warpToSector, fleetName, 2, 6, 63, 300, true);
       await actionWrapper(exitWarp, fleetName);
       await actionWrapper(dockToStarbase, fleetName);
-      await actionWrapper(loadCargo, fleetName, Resources.Carbon, 208350);
+      await actionWrapper(loadCargo, fleetName, Resources.Carbon, 158817);
       await actionWrapper(undockFromStarbase, fleetName);
       await actionWrapper(warpToSector, fleetName, 0, -10, 100, 300, true);
       await actionWrapper(exitWarp, fleetName);
       await actionWrapper(warpToSector, fleetName, -2, -6, 63, 300, true);
       await actionWrapper(exitWarp, fleetName);
       await actionWrapper(dockToStarbase, fleetName);
-      await actionWrapper(unloadCargo, fleetName, Resources.Carbon, 208350);
+      await actionWrapper(unloadCargo, fleetName, Resources.Carbon, 158817);
       await sendNotification(NotificationMessage.CARGO_SUCCESS);
     } catch (e) {
       await sendNotification(NotificationMessage.CARGO_ERROR);

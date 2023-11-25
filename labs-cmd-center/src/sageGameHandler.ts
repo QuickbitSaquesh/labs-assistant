@@ -9,7 +9,6 @@ import {
   InstructionReturn,
   TransactionReturn,
   buildAndSignTransaction,
-  getParsedTokenAccountsByOwner,
   keypairToAsyncSigner,
   readFromRPCOrError,
   sendTransaction,
@@ -37,6 +36,9 @@ import {
   Sector,
   Starbase,
   StarbasePlayer,
+  betterGetTokenAccountsByOwner,
+  getCargoPodsByAuthority,
+  getOrCreateAssociatedTokenAccount,
 } from "@staratlas/sage";
 
 const findGame = async (provider: AnchorProvider) => {
@@ -101,6 +103,7 @@ export class SageGameHandler {
     copper_ore: new PublicKey("CUore1tNkiubxSwDEtLc3Ybs1xfWLs8uGjyydUYZ25xc"),
     lumanite: new PublicKey("LUMACqD5LaKjs1AeuJYToybasTXoYQ7YkxJEc4jowNj"),
     rochinol: new PublicKey("RCH1Zhg4zcSSQK8rw2s6rDMVsgBEWa4kiv1oLFndrN5"),
+    sdu: new PublicKey("SDUsgfSZaDhhZ76U3ZgvtFiXsfnHbf2VrzYxjBZ5YbM"),
   };
 
   ready: Promise<string>;
@@ -320,6 +323,39 @@ export class SageGameHandler {
     return starbasePlayer;
   }
 
+  getStarbasePlayer(starbasePlayerPubkey: PublicKey): Promise<StarbasePlayer> {
+    const starbasePlayer = readFromRPCOrError(
+      this.provider.connection,
+      this.program,
+      starbasePlayerPubkey,
+      StarbasePlayer,
+      "confirmed"
+    );
+
+    return starbasePlayer;
+  }
+
+  async getCargoPodsByAuthority(authority: PublicKey) {
+    const [cargoPods] = await getCargoPodsByAuthority(
+      this.provider.connection,
+      this.cargoProgram,
+      authority
+    );
+
+    return cargoPods;
+  }
+
+  async getOrCreateAssociatedTokenAccount(mint: PublicKey, owner: PublicKey) {
+    const { address, instructions } = await getOrCreateAssociatedTokenAccount(
+      this.provider.connection,
+      mint,
+      owner,
+      true
+    );
+
+    return { address, instructions };
+  }
+
   getSagePlayerProfileAddress(playerProfile: PublicKey) {
     if (!this.gameId) {
       throw Error("this.gameId not set");
@@ -393,7 +429,7 @@ export class SageGameHandler {
   async getParsedTokenAccountsByOwner(
     owner: PublicKey
   ): Promise<TokenAccount[]> {
-    return await getParsedTokenAccountsByOwner(this.connection, owner);
+    return await betterGetTokenAccountsByOwner(this.connection, owner);
   }
 
   async buildAndSignTransaction(

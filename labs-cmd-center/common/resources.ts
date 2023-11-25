@@ -12,4 +12,5 @@ export enum Resources {
   CopperOre = "copper_ore",
   Lumanite = "lumanite",
   Rochinol = "rochinol",
+  Sdu = "sdu",
 }

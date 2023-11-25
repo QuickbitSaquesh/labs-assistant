@@ -742,7 +742,7 @@ export class SageFleetHandler {
     ixs.push(ix_0);
 
     let amountBN = BN.min(new BN(amount), new BN(tokenAccountFrom.amount));
-    if (amountBN <= 0) throw new Error("Amount can't be negative");
+    /* if (amountBN <= 0) throw new Error("Amount can't be negative"); */
 
     const program = this._gameHandler.program;
     const cargoProgram = this._gameHandler.cargoProgram;

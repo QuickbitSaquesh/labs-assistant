@@ -17,5 +17,6 @@ export const scan = async (fleetName: string) => {
     throw new Error("Fleet failed to scan due to transaction failure");
   }
 
+  console.log("");
   console.log(`Scan completed for ${fleetName}!`);
 };

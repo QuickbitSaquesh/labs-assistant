@@ -50,7 +50,7 @@ const scheduleScan = async (
   try {
     await scan(fleetName);
     setTimeout(
-      () => scheduleScan(fleetName, scanCooldown * 1000, x, y, time),
+      () => scheduleScan(fleetName, scanCooldown, x, y, time),
       scanCooldown * 1000
     );
   } catch (e) {
@@ -65,10 +65,10 @@ const scheduleScan = async (
 
 const run = async () => {
   const fleets = [
-    { name: "Flotta SCAN", x: 7, y: -8, time: 2262, scanCooldown: 41 },
-    { name: "Flotta SDU 1", x: 8, y: 1, time: 1260, scanCooldown: 56 },
-    { name: "Flotta SDU 2", x: 4, y: -7, time: 1260, scanCooldown: 57 },
-    { name: "Flotta SDU 3", x: 9, y: 4, time: 1539, scanCooldown: 56 },
+    { name: "Flotta SCAN", x: -8, y: 7, time: 2262, scanCooldown: 41 },
+    { name: "Flotta SDU 1", x: 1, y: 8, time: 1260, scanCooldown: 56 },
+    { name: "Flotta SDU 2", x: -7, y: 4, time: 1260, scanCooldown: 57 },
+    { name: "Flotta SDU 3", x: 4, y: 9, time: 1539, scanCooldown: 56 },
   ];
 
   while (true) {

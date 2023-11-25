@@ -1,8 +1,6 @@
-import { BN } from "@project-serum/anchor";
-import { PublicKey } from "@solana/web3.js";
 import { sageProvider } from "../utils/sageProvider";
 
-export const loadAmmo = async (fleetName: string, ammoAmount: BN) => {
+export const loadAmmo = async (fleetName: string, ammoAmount: number) => {
   const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
     await sageProvider();
 
@@ -19,15 +17,7 @@ export const loadAmmo = async (fleetName: string, ammoAmount: BN) => {
     console.log(" ");
     console.log("Loading ammo to fleet...");
 
-    const mintToken = sageGameHandler.mints?.ammo as PublicKey;
-    const ammoBankToKey = fleetAccount.data.ammoBank;
-
-    let ix = await sageFleetHandler.ixDepositCargoToFleet(
-      fleetPubkey,
-      ammoBankToKey,
-      mintToken,
-      ammoAmount
-    );
+    let ix = await sageFleetHandler.ixRearmFleet(fleetPubkey, ammoAmount);
     let tx = await sageGameHandler.buildAndSignTransaction(ix);
     let rx = await sageGameHandler.sendTransaction(tx);
 

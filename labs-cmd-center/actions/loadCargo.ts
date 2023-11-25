@@ -1,11 +1,10 @@
-import { BN } from "@project-serum/anchor";
 import { Resources } from "../common/resources";
 import { sageProvider } from "../utils/sageProvider";
 
 export const loadCargo = async (
   fleetName: string,
   resourceName: Resources,
-  amount: BN
+  amount: number
 ) => {
   const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
     await sageProvider();
@@ -22,11 +21,9 @@ export const loadCargo = async (
     console.log("Loading cargo to fleet...");
 
     const mintToken = sageGameHandler.getResourceMintAddress(resourceName);
-    const cargoPodToKey = fleetAccount.data.cargoHold;
 
     let ix = await sageFleetHandler.ixDepositCargoToFleet(
       fleetPubkey,
-      cargoPodToKey,
       mintToken,
       amount
     );

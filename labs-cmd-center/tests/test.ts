@@ -5,13 +5,13 @@ const run = async () => {
   const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
     await sageProvider();
 
-  const fleetName = "Guanaco Fleet";
+  const fleetName = "Flotta SCAN";
   const fleetPubkey = sageGameHandler.getFleetAddress(
     playerProfilePubkey,
     fleetName
   );
 
-  const tokenMint = sageGameHandler.getResourceMintAddress(Resources.Carbon);
+  const tokenMint = sageGameHandler.getResourceMintAddress(Resources.Sdu);
   let ix = await sageFleetHandler.ixWithdrawCargoFromFleet(
     fleetPubkey,
     tokenMint,

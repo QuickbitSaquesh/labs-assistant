@@ -12,17 +12,17 @@ import { actionWrapper } from "../utils/actionWrapper";
 import { sendNotification } from "../utils/sendNotification";
 
 const run = async () => {
-  const fleetName = Bun.env.MINING_FLEET_NAME as string;
+  const fleetName = "Flotta ALPHA";
   while (true) {
     try {
-      await actionWrapper(loadFuel, fleetName, 11451); // TO-DO: full refuel
-      await actionWrapper(loadAmmo, fleetName, 13645); // TO-DO: full rearm
-      await actionWrapper(loadCargo, fleetName, Resources.Food, 337);
+      await actionWrapper(loadFuel, fleetName, 999_999);
+      await actionWrapper(loadAmmo, fleetName, 999_999);
+      await actionWrapper(loadCargo, fleetName, Resources.Food, 654);
       await actionWrapper(undockFromStarbase, fleetName);
-      await actionWrapper(startMining, fleetName, Resources.Hydrogen, 1075);
+      await actionWrapper(startMining, fleetName, Resources.Hydrogen, 833);
       await actionWrapper(stopMining, fleetName, Resources.Hydrogen);
       await actionWrapper(dockToStarbase, fleetName);
-      await actionWrapper(unloadCargo, fleetName, Resources.Hydrogen, 13272);
+      await actionWrapper(unloadCargo, fleetName, Resources.Hydrogen, 999_999);
       await sendNotification(NotificationMessage.MINING_SUCCESS);
     } catch (e) {
       await sendNotification(NotificationMessage.MINING_ERROR);

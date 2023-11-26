@@ -26,6 +26,7 @@ export const unloadCargo = async (
       mintToken,
       amount
     );
+    if (!ix) return;
     let tx = await sageGameHandler.buildAndSignTransaction(ix);
     let rx = await sageGameHandler.sendTransaction(tx);
 

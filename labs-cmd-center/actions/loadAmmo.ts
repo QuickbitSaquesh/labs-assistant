@@ -18,6 +18,7 @@ export const loadAmmo = async (fleetName: string, ammoAmount: number) => {
     console.log("Loading ammo to fleet...");
 
     let ix = await sageFleetHandler.ixRearmFleet(fleetPubkey, ammoAmount);
+    if (!ix) return;
     let tx = await sageGameHandler.buildAndSignTransaction(ix);
     let rx = await sageGameHandler.sendTransaction(tx);
 

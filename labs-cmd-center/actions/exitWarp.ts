@@ -13,12 +13,11 @@ export const exitWarp = async (fleetName: string) => {
   let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
 
   // Check that the fleet is warping, abort if not
-  /* if (!fleetAccount.state.MoveWarp) {
-    throw Error("fleet is expected to be in warp");
-  } */
+  if (!fleetAccount.state.MoveWarp) return;
 
   // Instruct the fleet to exit warp
   let ix = await sageFleetHandler.ixReadyToExitWarp(fleetPubkey);
+  if (!ix) return;
   let tx = await sageGameHandler.buildAndSignTransaction(ix);
   let rx = await sageGameHandler.sendTransaction(tx);
 

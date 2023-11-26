@@ -39,6 +39,8 @@ export const warpToSector = async (
   console.log(`Warp from - X: ${sectorFrom[0]} | Y: ${sectorFrom[1]}`);
   console.log(`Warp to - X: ${sectorTo[0]} | Y: ${sectorTo[1]}`);
 
+  if (sectorFrom[0].eq(sectorTo[0]) && sectorFrom[1].eq(sectorTo[1])) return;
+
   // Instruct the fleet to warp to coordinate
   let ix = await sageFleetHandler.ixWarpToCoordinate(fleetPubkey, sectorTo);
   let tx = await sageGameHandler.buildAndSignTransaction(ix);

@@ -37,6 +37,8 @@ export const subwarpToSector = async (
   console.log(`Subwarp from - X: ${sectorFrom[0]} | Y: ${sectorFrom[1]}`);
   console.log(`Subwarp to - X: ${sectorTo[0]} | Y: ${sectorTo[1]}`);
 
+  if (sectorFrom[0].eq(sectorTo[0]) && sectorFrom[1].eq(sectorTo[1])) return;
+
   // Instruct the fleet to subwarp to coordinate
   let ix = await sageFleetHandler.ixSubwarpToCoordinate(fleetPubkey, sectorTo);
   let tx = await sageGameHandler.buildAndSignTransaction(ix);

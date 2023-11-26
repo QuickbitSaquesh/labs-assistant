@@ -18,6 +18,7 @@ export const loadFuel = async (fleetName: string, fuelAmount: number) => {
     console.log("Loading fuel to fleet...");
 
     let ix = await sageFleetHandler.ixRefuelFleet(fleetPubkey, fuelAmount);
+    if (!ix) return;
     let tx = await sageGameHandler.buildAndSignTransaction(ix);
     let rx = await sageGameHandler.sendTransaction(tx);
 

@@ -15,14 +15,12 @@ export const unloadCargo = async (
     fleetName
   );
 
-  let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
+  console.log(" ");
+  console.log("Unloading cargo from fleet...");
 
-  if (fleetAccount.state.StarbaseLoadingBay) {
-    console.log(" ");
-    console.log("Unloading cargo from fleet...");
+  const mintToken = sageGameHandler.getResourceMintAddress(resource);
 
-    const mintToken = sageGameHandler.getResourceMintAddress(resource);
-
+  try {
     let ix = await sageFleetHandler.ixWithdrawCargoFromFleet(
       fleetPubkey,
       mintToken,
@@ -31,11 +29,12 @@ export const unloadCargo = async (
     let tx = await sageGameHandler.buildAndSignTransaction(ix);
     let rx = await sageGameHandler.sendTransaction(tx);
 
-    // Check that the transaction was a success, if not abort
     if (!rx.value.isOk()) {
       throw Error("Fleet failed to unload cargo");
     }
 
     console.log("Fleet cargo unloaded!");
+  } catch (e) {
+    throw e;
   }
 };

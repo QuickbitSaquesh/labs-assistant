@@ -1,5 +1,8 @@
 import { BN } from "@project-serum/anchor";
-import { getAssociatedTokenAddress } from "@solana/spl-token";
+import {
+  getAssociatedTokenAddress,
+  getAssociatedTokenAddressSync,
+} from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import {
   InstructionReturn,
@@ -23,6 +26,7 @@ import {
   StopMiningAsteroidInput,
   SurveyDataUnitTracker,
   WarpToCoordinateInput,
+  getOrCreateAssociatedTokenAccount,
 } from "@staratlas/sage";
 
 import { NoEnoughRepairKits } from "../common/errors";
@@ -103,83 +107,78 @@ export class SageFleetHandler {
     return starbase;
   }
 
-  async ixScanForSurveyDataUnits(
-    fleetPubkey: PublicKey
-  ): Promise<InstructionReturn[]> {
+  async ixScanForSurveyDataUnits(fleetPubkey: PublicKey) {
+    if (!this._gameHandler.provider.connection)
+      throw new Error("RPCConnectionError");
+    if (!this._gameHandler.game) throw Error("GameIsNotLoaded");
+
     const ixs: InstructionReturn[] = [];
 
     const fleetAccount = await this.getFleetAccount(fleetPubkey);
+    if (!fleetAccount) throw new Error("FleetNotFound");
+    if (!fleetAccount.state.Idle) throw Error("FleetIsNotIdle");
+
     const fleetCargoHold = fleetAccount.data.cargoHold;
     const miscStats = fleetAccount.data.stats.miscStats as MiscStats;
-
-    if (!fleetAccount.state.Idle) {
-      throw Error("Fleet is not idle");
-    }
-
     const playerProfile = fleetAccount.data.ownerProfile;
-
     const program = this._gameHandler.program;
     const cargoProgram = this._gameHandler.cargoProgram;
-
     const payer = this._gameHandler.funder;
     const profileFaction =
       this._gameHandler.getProfileFactionAddress(playerProfile);
-
     const gameId = this._gameHandler.gameId as PublicKey;
     const gameState = this._gameHandler.gameState as PublicKey;
     const input = { keyIndex: 0 } as ScanForSurveyDataUnitsInput;
     const surveyDataUnitTracker = new PublicKey(
       "EJ74A2vb3HFhaEh4HqdejPpQoBjnyEctotcx1WudChwj"
     );
-
+    const [signerAddress] = SurveyDataUnitTracker.findSignerAddress(
+      this._gameHandler.program,
+      surveyDataUnitTracker
+    );
     const repairKitMint = this._gameHandler.game?.data.mints
       .repairKit as PublicKey;
     const repairKitCargoType =
       this._gameHandler.getCargoTypeAddress(repairKitMint);
-
     const sduMint = this._gameHandler.getResourceMintAddress("sdu");
     const sduCargoType = this._gameHandler.getCargoTypeAddress(sduMint);
-
     const cargoStatsDefinition = this._gameHandler
       .cargoStatsDefinition as PublicKey;
-
-    const [signerAddress] = await SurveyDataUnitTracker.findSignerAddress(
-      this._gameHandler.program,
-      surveyDataUnitTracker
-    );
-
-    const sduTokenFrom = await getAssociatedTokenAddress(
+    const sduTokenFrom = getAssociatedTokenAddressSync(
       sduMint,
       signerAddress,
       true
     );
-    const sduTokenTo = await getAssociatedTokenAddress(
+
+    const sduTokenTo = await getOrCreateAssociatedTokenAccount(
+      this._gameHandler.provider.connection,
       sduMint,
       fleetCargoHold,
       true
     );
+    const ix_0 = sduTokenTo.instructions;
+    if (ix_0) {
+      ixs.push(ix_0);
+      return { type: "CreateSduTokenAccount" as const, ixs };
+    }
 
-    const repairKitTokenFrom = await getAssociatedTokenAddress(
+    const repairKitTokenFrom = getAssociatedTokenAddressSync(
       repairKitMint,
       fleetCargoHold,
       true
     );
+    if (!repairKitTokenFrom) throw new NoEnoughRepairKits("NoEnoughRepairKits");
 
     const cargoPodFromKey = fleetAccount.data.cargoHold;
-
     const tokenAccount = (
       await this._gameHandler.getParsedTokenAccountsByOwner(cargoPodFromKey)
     ).find(
       (tokenAccount) =>
         tokenAccount.mint.toBase58() === repairKitMint.toBase58()
     );
-
-    if (!tokenAccount) {
-      throw Error("Token account not found");
-    }
-
+    if (!tokenAccount) throw new NoEnoughRepairKits("NoEnoughRepairKits");
     if (tokenAccount.amount < miscStats.scanRepairKitAmount) {
-      throw new NoEnoughRepairKits("Not enough toolkits to scan");
+      throw new NoEnoughRepairKits("NoEnoughRepairKits");
     }
 
     const ix_1 = SurveyDataUnitTracker.scanForSurveyDataUnits(
@@ -195,7 +194,7 @@ export class SageFleetHandler {
       repairKitCargoType,
       cargoStatsDefinition,
       sduTokenFrom,
-      sduTokenTo,
+      sduTokenTo.address,
       repairKitTokenFrom,
       repairKitMint,
       gameId,
@@ -204,8 +203,7 @@ export class SageFleetHandler {
     );
 
     ixs.push(ix_1);
-
-    return ixs;
+    return { type: "ScanInstructionReady" as const, ixs };
   }
 
   async ixDockToStarbase(fleetPubkey: PublicKey): Promise<InstructionReturn[]> {
@@ -667,26 +665,27 @@ export class SageFleetHandler {
     tokenMint: PublicKey,
     amount: number
   ): Promise<InstructionReturn[]> {
-    const ixs: InstructionReturn[] = [];
+    if (!this._gameHandler.provider.connection)
+      throw new Error("RPCConnectionError");
+    if (!this._gameHandler.game) throw Error("GameIsNotLoaded");
+    if (amount < 0) throw new Error("AmountCantBeNegative");
 
-    if (amount < 0) throw new Error("Amount can't be negative");
+    const ixs: InstructionReturn[] = [];
 
     // Fleet data
     const fleetAccount = await this.getFleetAccount(fleetPubkey);
-    const fleetCargoStats = fleetAccount.data.stats.cargoStats as CargoStats;
-
+    if (!fleetAccount) throw new Error("FleetNotFound");
     if (!fleetAccount.state.StarbaseLoadingBay)
-      throw new Error("Fleet is not at starbase loading bay");
+      throw Error("FleetIsNotAtStarbaseLoadingBay");
+
+    const fleetCargoStats = fleetAccount.data.stats.cargoStats as CargoStats;
 
     // Player Profile
     const playerProfilePubkey = fleetAccount.data.ownerProfile;
     const sagePlayerProfilePubkey =
-      await this._gameHandler.getSagePlayerProfileAddress(playerProfilePubkey);
+      this._gameHandler.getSagePlayerProfileAddress(playerProfilePubkey);
     const profileFactionPubkey =
       this._gameHandler.getProfileFactionAddress(playerProfilePubkey);
-
-    if (!sagePlayerProfilePubkey)
-      throw new Error("Sage Player Profile not found");
 
     // This PDA account is the owner of all the resources in the fleet's cargo (Fleet Cargo Holds - Stiva della flotta)
     const fleetCargoHoldsPubkey = fleetAccount.data.cargoHold;
@@ -697,9 +696,8 @@ export class SageFleetHandler {
     ).find(
       (tokenAccount) => tokenAccount.mint.toBase58() === tokenMint.toBase58()
     );
-
     if (!tokenAccountFrom)
-      throw new Error("Fleet cargo hold token account not found");
+      throw new NoEnoughRepairKits("FleetCargoHoldMintTokenAccountNotFound");
 
     const tokenAccountFromPubkey = tokenAccountFrom.address;
 
@@ -730,6 +728,8 @@ export class SageFleetHandler {
     ).find(
       (tokenAccount) => tokenAccount.mint.toBase58() === tokenMint.toBase58()
     );
+    if (!tokenAccountTo)
+      throw new NoEnoughRepairKits("StarbaseCargoPodMintTokenAccountNotFound");
 
     const tokenAccountToATA = createAssociatedTokenAccountIdempotent(
       tokenMint,

@@ -60,12 +60,10 @@ const scheduleScan = async (fleet: FleetScan) => {
     await scheduleScan(fleet);
   } catch (e) {
     if (e instanceof NoEnoughRepairKits) {
-      console.log("No enough repair kits to continue scanning.");
+      console.log("No enough repair kits to continue scanning");
       await backToStarbase(fleet);
     } else {
-      console.error(e);
-      await delay(fleet.scanCooldown * 1000);
-      await scheduleScan(fleet);
+      throw e;
     }
   }
 };

@@ -9,23 +9,24 @@ import { unloadCargo } from "../actions/unloadCargo";
 import { NotificationMessage } from "../common/notifications";
 import { Resources } from "../common/resources";
 import { actionWrapper } from "../utils/actionWrapper";
-import { sendNotification } from "../utils/sendNotification";
 
 const run = async () => {
-  const fleetName = "Flotta ALPHA";
+  const fleetName = "CesenaLama";
   while (true) {
     try {
       await actionWrapper(loadFuel, fleetName, 999_999);
       await actionWrapper(loadAmmo, fleetName, 999_999);
-      await actionWrapper(loadCargo, fleetName, Resources.Food, 654);
+      await actionWrapper(loadCargo, fleetName, Resources.Food, 2104);
       await actionWrapper(undockFromStarbase, fleetName);
-      await actionWrapper(startMining, fleetName, Resources.Hydrogen, 833);
+      await actionWrapper(startMining, fleetName, Resources.Hydrogen, 2293);
       await actionWrapper(stopMining, fleetName, Resources.Hydrogen);
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(unloadCargo, fleetName, Resources.Hydrogen, 999_999);
-      await sendNotification(NotificationMessage.MINING_SUCCESS);
+      console.log(NotificationMessage.MINING_SUCCESS);
+      // await sendNotification(NotificationMessage.MINING_SUCCESS);
     } catch (e) {
-      await sendNotification(NotificationMessage.MINING_ERROR);
+      console.log(NotificationMessage.MINING_ERROR);
+      // await sendNotification(NotificationMessage.MINING_ERROR);
     }
   }
 };

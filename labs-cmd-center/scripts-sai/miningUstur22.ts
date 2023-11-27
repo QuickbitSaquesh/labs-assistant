@@ -9,7 +9,6 @@ import { unloadCargo } from "../actions/unloadCargo";
 import { NotificationMessage } from "../common/notifications";
 import { Resources } from "../common/resources";
 import { actionWrapper } from "../utils/actionWrapper";
-import { sendNotification } from "../utils/sendNotification";
 
 const run = async () => {
   const fleetName = "Bologna LevaPietra";
@@ -23,9 +22,11 @@ const run = async () => {
       await actionWrapper(stopMining, fleetName, Resources.Lumanite);
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(unloadCargo, fleetName, Resources.Lumanite, 999_999);
-      await sendNotification(NotificationMessage.MINING_SUCCESS);
+      console.log(NotificationMessage.MINING_SUCCESS);
+      // await sendNotification(NotificationMessage.MINING_SUCCESS);
     } catch (e) {
-      await sendNotification(NotificationMessage.MINING_ERROR);
+      console.log(NotificationMessage.MINING_ERROR);
+      // await sendNotification(NotificationMessage.MINING_ERROR);
     }
   }
 };

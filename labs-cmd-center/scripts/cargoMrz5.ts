@@ -1,6 +1,5 @@
 import { dockToStarbase } from "../actions/dockToStarbase";
 import { exitSubwarp } from "../actions/exitSubwarp";
-import { loadAmmo } from "../actions/loadAmmo";
 import { loadCargo } from "../actions/loadCargo";
 import { loadFuel } from "../actions/loadFuel";
 import { subwarpToSector } from "../actions/subwarpToSector";
@@ -12,27 +11,22 @@ import { actionWrapper } from "../utils/actionWrapper";
 import { sendNotification } from "../utils/sendNotification";
 
 const run = async () => {
-  const fleetName = "Flotta CARGO";
+  const fleetName = "Flotta TOOL";
   while (true) {
     try {
       await actionWrapper(loadFuel, fleetName, 999_999);
-      await actionWrapper(loadAmmo, fleetName, 999_999);
-      await actionWrapper(loadCargo, fleetName, Resources.Food, 1893);
-      await actionWrapper(loadCargo, fleetName, Resources.Ammo, 8019);
-      await actionWrapper(loadCargo, fleetName, Resources.Fuel, 1362);
+      await actionWrapper(loadCargo, fleetName, Resources.Tool, 6972);
+      await actionWrapper(loadCargo, fleetName, Resources.Fuel, 2988);
       await actionWrapper(undockFromStarbase, fleetName);
-      await actionWrapper(subwarpToSector, fleetName, 10, -2, 2170);
+      await actionWrapper(subwarpToSector, fleetName, 2, 16, 1920);
       await actionWrapper(exitSubwarp, fleetName);
       await actionWrapper(dockToStarbase, fleetName);
-      await actionWrapper(unloadCargo, fleetName, Resources.Food, 1893);
-      await actionWrapper(unloadCargo, fleetName, Resources.Ammo, 8019);
-      await actionWrapper(unloadCargo, fleetName, Resources.Fuel, 1362);
-      await actionWrapper(loadCargo, fleetName, Resources.Carbon, 999_999);
+      await actionWrapper(unloadCargo, fleetName, Resources.Tool, 6972);
+      await actionWrapper(unloadCargo, fleetName, Resources.Fuel, 2988);
       await actionWrapper(undockFromStarbase, fleetName);
-      await actionWrapper(subwarpToSector, fleetName, -10, 2, 2170);
+      await actionWrapper(subwarpToSector, fleetName, -2, -16, 1920);
       await actionWrapper(exitSubwarp, fleetName);
       await actionWrapper(dockToStarbase, fleetName);
-      await actionWrapper(unloadCargo, fleetName, Resources.Carbon, 999_999);
       await sendNotification(NotificationMessage.CARGO_SUCCESS);
     } catch (e) {
       await sendNotification(NotificationMessage.CARGO_ERROR);

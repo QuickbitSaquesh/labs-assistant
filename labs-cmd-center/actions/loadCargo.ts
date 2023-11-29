@@ -14,14 +14,12 @@ export const loadCargo = async (
     fleetName
   );
 
-  let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
+  console.log(" ");
+  console.log("Loading cargo to fleet...");
 
-  if (fleetAccount.state.StarbaseLoadingBay) {
-    console.log(" ");
-    console.log("Loading cargo to fleet...");
+  const mintToken = sageGameHandler.getResourceMintAddress(resourceName);
 
-    const mintToken = sageGameHandler.getResourceMintAddress(resourceName);
-
+  try {
     let ix = await sageFleetHandler.ixDepositCargoToFleet(
       fleetPubkey,
       mintToken,
@@ -37,5 +35,7 @@ export const loadCargo = async (
     }
 
     console.log("Fleet cargo loaded!");
+  } catch (e) {
+    throw e;
   }
 };

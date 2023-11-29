@@ -9,17 +9,32 @@ import { unloadCargo } from "../actions/unloadCargo";
 import { NotificationMessage } from "../common/notifications";
 import { Resources } from "../common/resources";
 import { actionWrapper } from "../utils/actionWrapper";
+import { prepareForMining } from "../utils/prepareForMining";
 import { sendNotification } from "../utils/sendNotification";
 
 const run = async () => {
   const fleetName = "Flotta ALPHA";
+  const miningTimeAndResourcesAmount = await prepareForMining(
+    fleetName,
+    Resources.Hydrogen
+  );
   while (true) {
     try {
       await actionWrapper(loadFuel, fleetName, 999_999);
       await actionWrapper(loadAmmo, fleetName, 999_999);
-      await actionWrapper(loadCargo, fleetName, Resources.Food, 654);
+      await actionWrapper(
+        loadCargo,
+        fleetName,
+        Resources.Food,
+        miningTimeAndResourcesAmount.food
+      );
       await actionWrapper(undockFromStarbase, fleetName);
-      await actionWrapper(startMining, fleetName, Resources.Hydrogen, 833);
+      await actionWrapper(
+        startMining,
+        fleetName,
+        Resources.Hydrogen,
+        miningTimeAndResourcesAmount.timeInSeconds
+      );
       await actionWrapper(stopMining, fleetName, Resources.Hydrogen);
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(unloadCargo, fleetName, Resources.Hydrogen, 999_999);

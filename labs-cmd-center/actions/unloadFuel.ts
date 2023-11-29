@@ -1,6 +1,6 @@
 import { sageProvider } from "../utils/sageProvider";
 
-export const loadAmmo = async (fleetName: string, ammoAmount: number) => {
+export const unloadFuel = async (fleetName: string, fuelAmount: number) => {
   const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
     await sageProvider();
 
@@ -11,20 +11,20 @@ export const loadAmmo = async (fleetName: string, ammoAmount: number) => {
   );
 
   console.log(" ");
-  console.log("Loading ammo to fleet...");
+  console.log("Unloading fuel to fleet...");
 
   try {
-    let ix = await sageFleetHandler.ixRearmFleet(fleetPubkey, ammoAmount);
+    let ix = await sageFleetHandler.ixUnloadFuelTanks(fleetPubkey, fuelAmount);
     if (!ix) return;
     let tx = await sageGameHandler.buildAndSignTransaction(ix);
     let rx = await sageGameHandler.sendTransaction(tx);
 
     // Check that the transaction was a success, if not abort
     if (!rx.value.isOk()) {
-      throw Error("Fleet failed to load ammo");
+      throw Error("Fleet failed to unload fuel");
     }
 
-    console.log("Fleet ammo loaded!");
+    console.log("Fleet fuel unloaded!");
   } catch (e) {
     throw e;
   }

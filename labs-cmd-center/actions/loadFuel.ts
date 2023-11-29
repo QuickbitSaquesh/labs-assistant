@@ -10,13 +10,10 @@ export const loadFuel = async (fleetName: string, fuelAmount: number) => {
     fleetName
   );
 
-  // Get the fleet account
-  let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
+  console.log(" ");
+  console.log("Loading fuel to fleet...");
 
-  if (fleetAccount.state.StarbaseLoadingBay) {
-    console.log(" ");
-    console.log("Loading fuel to fleet...");
-
+  try {
     let ix = await sageFleetHandler.ixRefuelFleet(fleetPubkey, fuelAmount);
     if (!ix) return;
     let tx = await sageGameHandler.buildAndSignTransaction(ix);
@@ -28,5 +25,7 @@ export const loadFuel = async (fleetName: string, fuelAmount: number) => {
     }
 
     console.log("Fleet fuel loaded!");
+  } catch (e) {
+    throw e;
   }
 };

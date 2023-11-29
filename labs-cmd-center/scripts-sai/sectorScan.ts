@@ -98,10 +98,3 @@ run().catch((err) => {
   console.error(err);
   process.exit(1);
 });
-
-/* const fleets = [
-    { name: "Flotta SCAN", x: -3, y: 5, time: 1241, scanCooldown: 41 },
-    { name: "Flotta SDU 1", x: 1, y: 8, time: 1260, scanCooldown: 56 },
-    { name: "Flotta SDU 2", x: -7, y: 4, time: 1260, scanCooldown: 57 },
-    { name: "Flotta SDU 3", x: -6, y: 5, time: 1220, scanCooldown: 56 },
-  ]; */

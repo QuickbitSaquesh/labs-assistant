@@ -312,7 +312,8 @@ export class SageFleetHandler {
 
   async getTimeAndNeededResourcesToFullCargoInMining(
     fleetPubkey: PublicKey,
-    resource: string
+    resource: string,
+    starbaseCoordinates: [BN, BN]
   ) {
     if (!this._gameHandler.provider.connection)
       throw new Error("RPCConnectionError");
@@ -320,8 +321,6 @@ export class SageFleetHandler {
 
     const fleetAccount = await this.getFleetAccount(fleetPubkey);
     if (!fleetAccount) throw new Error("FleetNotFound");
-    if (!fleetAccount.state.StarbaseLoadingBay)
-      throw Error("FleetIsNotAtStarbaseLoadingBay");
 
     const fleetStats = fleetAccount.data.stats as ShipStats;
     const cargoStats = fleetStats.cargoStats;
@@ -330,7 +329,8 @@ export class SageFleetHandler {
     const mineItemPubkey = this._gameHandler.getMineItemAddress(mint);
     const mineItemAccount = await this.getMineItemAccount(mineItemPubkey);
 
-    const starbasePubkey = fleetAccount.state.StarbaseLoadingBay.starbase;
+    const starbasePubkey =
+      this._gameHandler.getStarbaseAddress(starbaseCoordinates);
     const starbaseAccount = await this.getStarbaseAccount(starbasePubkey);
 
     const planetPubkey = await this._gameHandler.getPlanetAddress(
@@ -1363,6 +1363,30 @@ export class SageFleetHandler {
     ixs.push(ix_1);
 
     return ixs;
+  }
+
+  async getTimeToSubwarp(
+    fleetPubkey: PublicKey,
+    coordinatesFrom: [BN, BN],
+    coordinatesTo: [BN, BN]
+  ) {
+    if (!this._gameHandler.provider.connection)
+      throw new Error("RPCConnectionError");
+    if (!this._gameHandler.game) throw Error("GameIsNotLoaded");
+
+    const fleetAccount = await this.getFleetAccount(fleetPubkey);
+    if (!fleetAccount) throw new Error("FleetNotFound");
+    if (!fleetAccount.state.Idle) throw Error("FleetIsNotIdle");
+
+    const fleetStats = fleetAccount.data.stats as ShipStats;
+
+    const timeToSubwarp = Fleet.calculateSubwarpTimeWithCoords(
+      fleetStats,
+      coordinatesFrom,
+      coordinatesTo
+    );
+
+    return timeToSubwarp;
   }
 
   async ixSubwarpToCoordinate(

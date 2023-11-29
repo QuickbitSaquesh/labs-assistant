@@ -18,7 +18,8 @@ const run = async () => {
   const fleetName = "Flotta BETA";
   const miningTimeAndResourcesAmount = await prepareForMining(
     fleetName,
-    Resources.IronOre
+    Resources.IronOre,
+    [2, -34]
   );
   while (true) {
     try {
@@ -31,7 +32,7 @@ const run = async () => {
         miningTimeAndResourcesAmount.food
       );
       await actionWrapper(undockFromStarbase, fleetName);
-      await actionWrapper(subwarpToSector, fleetName, 2, 5, 1313);
+      await actionWrapper(subwarpToSector, fleetName, 2, 5);
       await actionWrapper(exitSubwarp, fleetName);
       await actionWrapper(
         startMining,
@@ -40,7 +41,7 @@ const run = async () => {
         miningTimeAndResourcesAmount.timeInSeconds
       );
       await actionWrapper(stopMining, fleetName, Resources.IronOre);
-      await actionWrapper(subwarpToSector, fleetName, -2, -5, 1313);
+      await actionWrapper(subwarpToSector, fleetName, -2, -5);
       await actionWrapper(exitSubwarp, fleetName);
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(unloadCargo, fleetName, Resources.IronOre, 999_999);

@@ -18,13 +18,13 @@ const run = async () => {
       await actionWrapper(loadCargo, fleetName, Resources.Tool, 6972);
       await actionWrapper(loadCargo, fleetName, Resources.Fuel, 2988);
       await actionWrapper(undockFromStarbase, fleetName);
-      await actionWrapper(subwarpToSector, fleetName, 2, 16, 1920);
+      await actionWrapper(subwarpToSector, fleetName, 2, 16);
       await actionWrapper(exitSubwarp, fleetName);
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(unloadCargo, fleetName, Resources.Tool, 6972);
       await actionWrapper(unloadCargo, fleetName, Resources.Fuel, 2988);
       await actionWrapper(undockFromStarbase, fleetName);
-      await actionWrapper(subwarpToSector, fleetName, -2, -16, 1920);
+      await actionWrapper(subwarpToSector, fleetName, -2, -16);
       await actionWrapper(exitSubwarp, fleetName);
       await actionWrapper(dockToStarbase, fleetName);
       await sendNotification(NotificationMessage.CARGO_SUCCESS);

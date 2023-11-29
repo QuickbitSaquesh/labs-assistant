@@ -37,13 +37,7 @@ const getFleetDetails = async (): Promise<FleetScan> => {
 };
 
 const backToStarbase = async (fleet: FleetScan) => {
-  await actionWrapper(
-    subwarpToSector,
-    fleet.name,
-    fleet.x * -1,
-    fleet.y * -1,
-    fleet.time
-  );
+  await actionWrapper(subwarpToSector, fleet.name, fleet.x * -1, fleet.y * -1);
   await actionWrapper(exitSubwarp, fleet.name);
   await actionWrapper(dockToStarbase, fleet.name);
   await actionWrapper(unloadCargo, fleet.name, Resources.Sdu, 999_999);
@@ -78,13 +72,7 @@ const run = async () => {
       await actionWrapper(loadCargo, fleet.name, Resources.Tool, 999_999);
       await actionWrapper(loadFuel, fleet.name, 999_999);
       await actionWrapper(undockFromStarbase, fleet.name);
-      await actionWrapper(
-        subwarpToSector,
-        fleet.name,
-        fleet.x,
-        fleet.y,
-        fleet.time
-      );
+      await actionWrapper(subwarpToSector, fleet.name, fleet.x, fleet.y);
       await actionWrapper(exitSubwarp, fleet.name);
       await actionWrapper(scheduleScan, fleet);
     } catch (e) {

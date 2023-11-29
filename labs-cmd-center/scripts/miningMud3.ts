@@ -16,7 +16,8 @@ const run = async () => {
   const fleetName = "Flotta GAMMA";
   const miningTimeAndResourcesAmount = await prepareForMining(
     fleetName,
-    Resources.Carbon
+    Resources.Carbon,
+    [10, -41]
   );
   while (true) {
     try {

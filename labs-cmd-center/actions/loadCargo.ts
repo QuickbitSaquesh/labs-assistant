@@ -25,14 +25,12 @@ export const loadCargo = async (
       mintToken,
       amount
     );
-    if (!ix) return;
-    let tx = await sageGameHandler.buildAndSignTransaction(ix);
-    let rx = await sageGameHandler.sendTransaction(tx);
+    if (ix.type != "Success") throw new Error(ix.type);
 
-    // Check that the transaction was a success, if not abort
-    if (!rx.value.isOk()) {
-      throw Error("Fleet failed to load cargo");
-    }
+    let tx = await sageGameHandler.buildAndSignTransaction(ix.ixs);
+
+    let rx = await sageGameHandler.sendTransaction(tx);
+    if (!rx.value.isOk()) throw Error("FleetFailedToLoadCargo");
 
     console.log("Fleet cargo loaded!");
   } catch (e) {

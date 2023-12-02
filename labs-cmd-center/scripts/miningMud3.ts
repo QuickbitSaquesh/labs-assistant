@@ -39,9 +39,9 @@ const run = async () => {
       await actionWrapper(stopMining, fleetName, Resources.Carbon);
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(unloadCargo, fleetName, Resources.Carbon, 999_999);
-      await sendNotification(NotificationMessage.MINING_SUCCESS);
+      await sendNotification(NotificationMessage.MINING_SUCCESS, fleetName);
     } catch (e) {
-      await sendNotification(NotificationMessage.MINING_ERROR);
+      await sendNotification(NotificationMessage.MINING_ERROR, fleetName);
     }
   }
 };

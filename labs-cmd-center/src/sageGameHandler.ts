@@ -336,7 +336,7 @@ export class SageGameHandler {
   }
 
   async getCargoPodsByAuthority(authority: PublicKey) {
-    const [cargoPods] = await getCargoPodsByAuthority(
+    const cargoPods = getCargoPodsByAuthority(
       this.provider.connection,
       this.cargoProgram,
       authority
@@ -429,7 +429,7 @@ export class SageGameHandler {
   async getParsedTokenAccountsByOwner(
     owner: PublicKey
   ): Promise<TokenAccount[]> {
-    return await betterGetTokenAccountsByOwner(this.connection, owner);
+    return betterGetTokenAccountsByOwner(this.connection, owner);
   }
 
   async buildAndSignTransaction(

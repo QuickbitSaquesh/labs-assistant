@@ -33,9 +33,14 @@ const run = async () => {
       await actionWrapper(exitSubwarp, fleetName);
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(unloadCargo, fleetName, Resources.Carbon, 999_999);
-      await sendNotification(NotificationMessage.CARGO_SUCCESS);
+      await sendNotification(
+        NotificationMessage.CARGO_SUCCESS,
+        fleetName,
+        Resources.Carbon,
+        158817
+      );
     } catch (e) {
-      await sendNotification(NotificationMessage.CARGO_ERROR);
+      await sendNotification(NotificationMessage.CARGO_ERROR, fleetName);
     }
   }
 };

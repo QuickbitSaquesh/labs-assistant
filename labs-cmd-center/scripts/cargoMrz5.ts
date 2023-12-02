@@ -25,9 +25,9 @@ const run = async () => {
       await actionWrapper(subwarpToSector, fleetName, -2, -16);
       await actionWrapper(exitSubwarp, fleetName);
       await actionWrapper(dockToStarbase, fleetName);
-      await sendNotification(NotificationMessage.CARGO_SUCCESS);
+      await sendNotification(NotificationMessage.CARGO_SUCCESS, fleetName);
     } catch (e) {
-      await sendNotification(NotificationMessage.CARGO_ERROR);
+      await sendNotification(NotificationMessage.CARGO_ERROR, fleetName);
     }
   }
 };

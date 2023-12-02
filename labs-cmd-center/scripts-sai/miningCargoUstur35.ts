@@ -45,9 +45,12 @@ const run = async () => {
       await actionWrapper(exitSubwarp, fleetName);
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(unloadCargo, fleetName, Resources.CopperOre, 999_999);
-      await sendNotification(NotificationMessage.MINING_CARGO_SUCCESS);
+      await sendNotification(
+        NotificationMessage.MINING_CARGO_SUCCESS,
+        fleetName
+      );
     } catch (e) {
-      await sendNotification(NotificationMessage.MINING_CARGO_ERROR);
+      await sendNotification(NotificationMessage.MINING_CARGO_ERROR, fleetName);
     }
   }
 };

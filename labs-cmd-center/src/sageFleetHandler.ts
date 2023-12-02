@@ -588,44 +588,47 @@ export class SageFleetHandler {
     fleetPubkey: PublicKey,
     tokenMint: PublicKey,
     amount: number
-  ): Promise<InstructionReturn[]> {
-    if (!this._gameHandler.provider.connection)
-      throw new Error("RPCConnectionError");
-    if (!this._gameHandler.game) throw Error("GameIsNotLoaded");
-    if (amount < 0) throw new Error("AmountCantBeNegative");
-
+  ) {
     const ixs: InstructionReturn[] = [];
 
-    // Fleet data
+    // Check connection and game state
+    if (!this._gameHandler.provider.connection)
+      return { type: "RPCConnectionError" as const, ixs };
+    if (!this._gameHandler.game)
+      return { type: "GameIsNotLoaded" as const, ixs };
+    if (amount < 0) return { type: "AmountCantBeNegative" as const, ixs };
+
+    // Get all fleet data
     const fleetAccount = await this.getFleetAccount(fleetPubkey);
-    if (!fleetAccount) throw new Error("FleetNotFound");
+    if (!fleetAccount) return { type: "FleetNotFound" as const, ixs };
     if (!fleetAccount.state.StarbaseLoadingBay)
-      throw Error("FleetIsNotAtStarbaseLoadingBay");
+      return { type: "FleetIsNotAtStarbaseLoadingBay" as const, ixs };
     const fleetCargoStats = fleetAccount.data.stats.cargoStats as CargoStats;
 
-    // Player Profile
+    // Get player profile data
     const playerProfilePubkey = fleetAccount.data.ownerProfile;
     const sagePlayerProfilePubkey =
       this._gameHandler.getSagePlayerProfileAddress(playerProfilePubkey);
     const profileFactionPubkey =
       this._gameHandler.getProfileFactionAddress(playerProfilePubkey);
 
-    // Starbase where the fleet is located
+    // Get starbase where the fleet is located
     const starbasePubkey = fleetAccount.state.StarbaseLoadingBay
       .starbase as PublicKey;
     const starbaseAccount = await this.getStarbaseAccount(starbasePubkey);
-
-    // PDA Starbase - Player
+    if (!starbaseAccount)
+      return { type: "StarbaseAccountNotFound" as const, ixs };
     const starbasePlayerPubkey = this._gameHandler.getStarbasePlayerAddress(
       starbasePubkey,
       sagePlayerProfilePubkey,
       starbaseAccount.data.seqId
     );
 
-    // This PDA account is the owner of all player resource token accounts
-    // in the starbase where the fleet is located (Starbase Cargo Pods - Deposito merci nella Starbase)
-    const starbasePlayerCargoPodsAccount =
+    // Get starbase player cargo pod
+    const [starbasePlayerCargoPodsAccount] =
       await this._gameHandler.getCargoPodsByAuthority(starbasePlayerPubkey);
+    if (!starbasePlayerCargoPodsAccount)
+      return { type: "StarbasePlayerCargoPodsAccountNotFound" as const, ixs };
     const starbasePlayerCargoPodsPubkey = starbasePlayerCargoPodsAccount.key;
     const tokenAccountFrom = (
       await this._gameHandler.getParsedTokenAccountsByOwner(
@@ -635,43 +638,48 @@ export class SageFleetHandler {
       (tokenAccount) => tokenAccount.mint.toBase58() === tokenMint.toBase58()
     );
     if (!tokenAccountFrom)
-      throw new Error("StarbaseCargoPodTokenAccountNotFound");
-
+      return { type: "StarbaseCargoPodTokenAccountNotFound" as const, ixs };
     const tokenAccountFromPubkey = tokenAccountFrom.address;
 
-    // This PDA account is the owner of all the resources in the fleet's cargo (Fleet Cargo Holds - Stiva della flotta)
+    // Get fleet cargo hold
     const fleetCargoHoldsPubkey = fleetAccount.data.cargoHold;
-    const tokenAccountTo = (
+    const fleetCargoHoldsTokenAccounts =
       await this._gameHandler.getParsedTokenAccountsByOwner(
         fleetCargoHoldsPubkey
-      )
-    ).find(
+      );
+    const currentFleetCargoAmount = fleetCargoHoldsTokenAccounts.reduce(
+      (accumulator, currentAccount) => {
+        return accumulator + currentAccount.amount;
+      },
+      0n
+    );
+    const tokenAccountTo = fleetCargoHoldsTokenAccounts.find(
       (tokenAccount) => tokenAccount.mint.toBase58() === tokenMint.toBase58()
     );
-
     const tokenAccountToATA = createAssociatedTokenAccountIdempotent(
       tokenMint,
       fleetCargoHoldsPubkey,
       true
     );
     const tokenAccountToPubkey = tokenAccountToATA.address;
-
     const ix_0 = tokenAccountToATA.instructions;
     ixs.push(ix_0);
 
-    // amount > fleet free capacity?
+    // Calc the amount to deposit
     let amountBN = BN.min(
       new BN(amount),
-      tokenAccountTo
+      fleetCargoHoldsTokenAccounts.length > 0
         ? new BN(fleetCargoStats.cargoCapacity).sub(
-            new BN(tokenAccountTo.amount)
+            new BN(currentFleetCargoAmount)
           )
         : new BN(fleetCargoStats.cargoCapacity)
     );
-    // amount > starbase amount?
+    if (amountBN == 0) return { type: "FleetCargoIsFull" as const, ixs: [] };
     amountBN = BN.min(amountBN, new BN(tokenAccountFrom.amount));
-    if (amountBN <= 0) return ixs;
+    if (amountBN == 0)
+      return { type: "StarbaseCargoIsEmpty" as const, ixs: [] };
 
+    // Other accounts
     const program = this._gameHandler.program;
     const cargoProgram = this._gameHandler.cargoProgram;
     const payer = this._gameHandler.funder;
@@ -683,6 +691,7 @@ export class SageFleetHandler {
     const cargoStatsDefinition = this._gameHandler
       .cargoStatsDefinition as PublicKey;
 
+    // Compose the main instruction
     const ix_1 = Fleet.depositCargoToFleet(
       program,
       cargoProgram,
@@ -704,10 +713,8 @@ export class SageFleetHandler {
       gameState,
       input
     );
-
     ixs.push(ix_1);
-
-    return ixs;
+    return { type: "Success" as const, ixs };
   }
 
   // New
@@ -716,28 +723,30 @@ export class SageFleetHandler {
     fleetPubkey: PublicKey,
     tokenMint: PublicKey,
     amount: number
-  ): Promise<InstructionReturn[]> {
-    if (!this._gameHandler.provider.connection)
-      throw new Error("RPCConnectionError");
-    if (!this._gameHandler.game) throw Error("GameIsNotLoaded");
-    if (amount < 0) throw new Error("AmountCantBeNegative");
-
+  ) {
     const ixs: InstructionReturn[] = [];
 
-    // Fleet data
-    const fleetAccount = await this.getFleetAccount(fleetPubkey);
-    if (!fleetAccount) throw new Error("FleetNotFound");
-    if (!fleetAccount.state.StarbaseLoadingBay)
-      throw Error("FleetIsNotAtStarbaseLoadingBay");
+    // Check connection and game state
+    if (!this._gameHandler.provider.connection)
+      return { type: "RPCConnectionError" as const, ixs };
+    if (!this._gameHandler.game)
+      return { type: "GameIsNotLoaded" as const, ixs };
+    if (amount < 0) return { type: "AmountCantBeNegative" as const, ixs };
 
-    // Player Profile
+    // Get all fleet data
+    const fleetAccount = await this.getFleetAccount(fleetPubkey);
+    if (!fleetAccount) return { type: "FleetNotFound" as const, ixs };
+    if (!fleetAccount.state.StarbaseLoadingBay)
+      return { type: "FleetIsNotAtStarbaseLoadingBay" as const, ixs };
+
+    // Get player profile data
     const playerProfilePubkey = fleetAccount.data.ownerProfile;
     const sagePlayerProfilePubkey =
       this._gameHandler.getSagePlayerProfileAddress(playerProfilePubkey);
     const profileFactionPubkey =
       this._gameHandler.getProfileFactionAddress(playerProfilePubkey);
 
-    // This PDA account is the owner of all the resources in the fleet's cargo (Fleet Cargo Holds - Stiva della flotta)
+    // Get fleet cargo hold
     const fleetCargoHoldsPubkey = fleetAccount.data.cargoHold;
     const tokenAccountFrom = (
       await this._gameHandler.getParsedTokenAccountsByOwner(
@@ -751,37 +760,39 @@ export class SageFleetHandler {
 
     const tokenAccountFromPubkey = tokenAccountFrom.address;
 
-    // Starbase where the fleet is located
+    // Get starbase where the fleet is located
     const starbasePubkey = fleetAccount.state.StarbaseLoadingBay
       .starbase as PublicKey;
     const starbaseAccount = await this.getStarbaseAccount(starbasePubkey);
-
-    // PDA Starbase - Player
+    if (!starbaseAccount)
+      return { type: "StarbaseAccountNotFound" as const, ixs };
     const starbasePlayerPubkey = this._gameHandler.getStarbasePlayerAddress(
       starbasePubkey,
       sagePlayerProfilePubkey,
       starbaseAccount.data.seqId
     );
 
-    // This PDA account is the owner of all player resource token accounts
-    // in the starbase where the fleet is located (Starbase Cargo Pods - Deposito merci nella Starbase)
-    const starbasePlayerCargoPodsAccount =
+    // Get starbase player cargo pod
+    const [starbasePlayerCargoPodsAccount] =
       await this._gameHandler.getCargoPodsByAuthority(starbasePlayerPubkey);
+    if (!starbasePlayerCargoPodsAccount)
+      return { type: "StarbasePlayerCargoPodsAccountNotFound" as const, ixs };
     const starbasePlayerCargoPodsPubkey = starbasePlayerCargoPodsAccount.key;
-
     const tokenAccountToATA = createAssociatedTokenAccountIdempotent(
       tokenMint,
       starbasePlayerCargoPodsPubkey,
       true
     );
     const tokenAccountToPubkey = tokenAccountToATA.address;
-
     const ix_0 = tokenAccountToATA.instructions;
     ixs.push(ix_0);
 
+    // Calc the amount to withdraw
     let amountBN = BN.min(new BN(amount), new BN(tokenAccountFrom.amount));
-    if (amountBN <= 0) return ixs;
+    if (amountBN == 0)
+      return { type: "NoResourcesToWithdraw" as const, ixs: [] };
 
+    // Other accounts
     const program = this._gameHandler.program;
     const cargoProgram = this._gameHandler.cargoProgram;
     const payer = this._gameHandler.funder;
@@ -793,6 +804,7 @@ export class SageFleetHandler {
     const cargoStatsDefinition = this._gameHandler
       .cargoStatsDefinition as PublicKey;
 
+    // Compose the main instruction
     const ix_1 = Fleet.withdrawCargoFromFleet(
       program,
       cargoProgram,
@@ -814,10 +826,8 @@ export class SageFleetHandler {
       gameState,
       input
     );
-
     ixs.push(ix_1);
-
-    return ixs;
+    return { type: "Success" as const, ixs };
   }
 
   // New
@@ -863,7 +873,7 @@ export class SageFleetHandler {
 
     // This PDA account is the owner of all player resource token accounts
     // in the starbase where the fleet is located (Starbase Cargo Pods - Deposito merci nella Starbase)
-    const starbasePlayerCargoPodsAccount =
+    const [starbasePlayerCargoPodsAccount] =
       await this._gameHandler.getCargoPodsByAuthority(starbasePlayerPubkey);
     const starbasePlayerCargoPodsPubkey = starbasePlayerCargoPodsAccount.key;
     const tokenAccountFrom = (
@@ -989,7 +999,7 @@ export class SageFleetHandler {
 
     // This PDA account is the owner of all player resource token accounts
     // in the starbase where the fleet is located (Starbase Cargo Pods - Deposito merci nella Starbase)
-    const starbasePlayerCargoPodsAccount =
+    const [starbasePlayerCargoPodsAccount] =
       await this._gameHandler.getCargoPodsByAuthority(starbasePlayerPubkey);
     const starbasePlayerCargoPodsPubkey = starbasePlayerCargoPodsAccount.key;
 
@@ -1098,7 +1108,7 @@ export class SageFleetHandler {
 
     // This PDA account is the owner of all player resource token accounts
     // in the starbase where the fleet is located (Starbase Cargo Pods - Deposito merci nella Starbase)
-    const starbasePlayerCargoPodsAccount =
+    const [starbasePlayerCargoPodsAccount] =
       await this._gameHandler.getCargoPodsByAuthority(starbasePlayerPubkey);
     const starbasePlayerCargoPodsPubkey = starbasePlayerCargoPodsAccount.key;
     const tokenAccountFrom = (
@@ -1224,7 +1234,7 @@ export class SageFleetHandler {
 
     // This PDA account is the owner of all player resource token accounts
     // in the starbase where the fleet is located (Starbase Cargo Pods - Deposito merci nella Starbase)
-    const starbasePlayerCargoPodsAccount =
+    const [starbasePlayerCargoPodsAccount] =
       await this._gameHandler.getCargoPodsByAuthority(starbasePlayerPubkey);
     const starbasePlayerCargoPodsPubkey = starbasePlayerCargoPodsAccount.key;
 

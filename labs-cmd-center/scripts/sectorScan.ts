@@ -41,7 +41,7 @@ const backToStarbase = async (fleet: FleetScan) => {
   await actionWrapper(exitSubwarp, fleet.name);
   await actionWrapper(dockToStarbase, fleet.name);
   await actionWrapper(unloadCargo, fleet.name, Resources.Sdu, 999_999);
-  await sendNotification(NotificationMessage.SCAN_SUCCESS);
+  await sendNotification(NotificationMessage.SCAN_SUCCESS, fleet.name);
 };
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -77,7 +77,7 @@ const run = async () => {
       await actionWrapper(scheduleScan, fleet);
     } catch (e) {
       console.log(e);
-      await sendNotification(NotificationMessage.SCAN_ERROR);
+      await sendNotification(NotificationMessage.SCAN_ERROR, fleet.name);
     }
   }
 };

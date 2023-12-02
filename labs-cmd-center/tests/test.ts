@@ -1,25 +1,37 @@
-import { BN } from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { SageFleetHandler, SageGameHandler } from "..";
+import { NotificationMessage } from "../common/notifications";
 import { Resources } from "../common/resources";
 import { sageProvider } from "../utils/sageProvider";
+import { sendNotification } from "../utils/sendNotification";
 
 const run = async () => {
   const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
     await sageProvider();
 
-  const fleetName = "Flotta BETA";
+  const fleetName = "Flotta CARGO";
   const fleetPubkey = sageGameHandler.getFleetAddress(
     playerProfilePubkey,
     fleetName
   );
 
-  const tts = await sageFleetHandler.getTimeToSubwarp(
+  /*   await loadCargo(fleetName, Resources.Carbon, 10000);
+  await loadCargo(fleetName, Resources.CopperOre, 15000);
+  await loadCargo(fleetName, Resources.IronOre, 999_999); */
+
+  await sendNotification(
+    NotificationMessage.CARGO_SUCCESS,
+    fleetName,
+    Resources.Carbon,
+    158817
+  );
+
+  /* const tts = await sageFleetHandler.getTimeToSubwarp(
     fleetPubkey,
     [new BN(0), new BN(-39)],
     [new BN(2), new BN(-34)]
   );
-  console.log(tts);
+  console.log(tts); */
   // await unloadFuel(fleetName, -9999);
   // await test1(sageGameHandler, sageFleetHandler, fleetPubkey);
 };

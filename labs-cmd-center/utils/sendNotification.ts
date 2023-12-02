@@ -1,8 +1,19 @@
 import { NotificationMessage } from "../common/notifications";
+import { Resources } from "../common/resources";
 
-export const sendNotification = async (notification: NotificationMessage) => {
+export const sendNotification = async (
+  notification: NotificationMessage,
+  fleetName?: string,
+  resource?: Resources,
+  amount?: number
+) => {
   const url = Bun.env.MAKE_HOOK as string;
-  const payload = { message: notification };
+  const payload = {
+    message: fleetName ? `${fleetName}: ${notification}` : notification,
+    resource,
+    amount,
+    fleetName,
+  };
   const headers = { "Content-Type": "application/json" };
 
   try {

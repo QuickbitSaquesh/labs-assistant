@@ -39,9 +39,14 @@ const run = async () => {
       await actionWrapper(stopMining, fleetName, Resources.Hydrogen);
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(unloadCargo, fleetName, Resources.Hydrogen, 999_999);
-      await sendNotification(NotificationMessage.MINING_SUCCESS);
+      await sendNotification(
+        NotificationMessage.MINING_SUCCESS,
+        fleetName,
+        Resources.Hydrogen,
+        12201
+      );
     } catch (e) {
-      await sendNotification(NotificationMessage.MINING_ERROR);
+      await sendNotification(NotificationMessage.MINING_ERROR, fleetName);
     }
   }
 };

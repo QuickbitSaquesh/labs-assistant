@@ -1,4 +1,3 @@
-import * as readline from "readline";
 import { dockToStarbase } from "../actions/dockToStarbase";
 import { exitSubwarp } from "../actions/exitSubwarp";
 import { loadCargo } from "../actions/loadCargo";
@@ -7,21 +6,14 @@ import { scan } from "../actions/scan";
 import { subwarpToSector } from "../actions/subwarpToSector";
 import { undockFromStarbase } from "../actions/undockFromStarbase";
 import { unloadCargo } from "../actions/unloadCargo";
+import { MAX_AMOUNT } from "../common/constants";
 import { NoEnoughRepairKits } from "../common/errors";
 import { NotificationMessage } from "../common/notifications";
 import { Resources } from "../common/resources";
 import { FleetScan } from "../common/types";
 import { actionWrapper } from "../utils/actionWrapper";
+import { askQuestion } from "../utils/askQuestion";
 import { sendNotification } from "../utils/sendNotification";
-
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
-
-const askQuestion = (query: string): Promise<string> => {
-  return new Promise((resolve) => rl.question(query, resolve));
-};
 
 const getFleetDetails = async (): Promise<FleetScan> => {
   const name = await askQuestion("Enter fleet name: ");
@@ -40,7 +32,7 @@ const backToStarbase = async (fleet: FleetScan) => {
   await actionWrapper(subwarpToSector, fleet.name, fleet.x * -1, fleet.y * -1);
   await actionWrapper(exitSubwarp, fleet.name);
   await actionWrapper(dockToStarbase, fleet.name);
-  await actionWrapper(unloadCargo, fleet.name, Resources.Sdu, 999_999);
+  await actionWrapper(unloadCargo, fleet.name, Resources.Sdu, MAX_AMOUNT);
   await sendNotification(NotificationMessage.SCAN_SUCCESS, fleet.name);
 };
 
@@ -69,8 +61,8 @@ const run = async () => {
   console.log("Scan operations started!");
   while (true) {
     try {
-      await actionWrapper(loadCargo, fleet.name, Resources.Tool, 999_999);
-      await actionWrapper(loadFuel, fleet.name, 999_999);
+      await actionWrapper(loadCargo, fleet.name, Resources.Tool, MAX_AMOUNT);
+      await actionWrapper(loadFuel, fleet.name, MAX_AMOUNT);
       await actionWrapper(undockFromStarbase, fleet.name);
       await actionWrapper(subwarpToSector, fleet.name, fleet.x, fleet.y);
       await actionWrapper(exitSubwarp, fleet.name);

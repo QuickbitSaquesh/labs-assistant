@@ -1,5 +1,6 @@
 import { PublicKey } from "@solana/web3.js";
 import { SageFleetHandler, SageGameHandler } from "..";
+import { MAX_AMOUNT } from "../common/constants";
 import { NotificationMessage } from "../common/notifications";
 import { Resources } from "../common/resources";
 import { sageProvider } from "../utils/sageProvider";
@@ -17,7 +18,7 @@ const run = async () => {
 
   /*   await loadCargo(fleetName, Resources.Carbon, 10000);
   await loadCargo(fleetName, Resources.CopperOre, 15000);
-  await loadCargo(fleetName, Resources.IronOre, 999_999); */
+  await loadCargo(fleetName, Resources.IronOre, MAX_AMOUNT); */
 
   await sendNotification(
     NotificationMessage.CARGO_SUCCESS,
@@ -45,7 +46,7 @@ const test1 = async (
   let ix = await sageFleetHandler.ixWithdrawCargoFromFleet(
     fleetPubkey,
     tokenMint,
-    999_999
+    MAX_AMOUNT
   );
   let tx = await sageGameHandler.buildAndSignTransaction(ix);
   let rx = await sageGameHandler.sendTransaction(tx);

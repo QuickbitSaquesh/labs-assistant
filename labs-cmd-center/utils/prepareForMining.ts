@@ -1,10 +1,10 @@
 import { BN } from "@project-serum/anchor";
-import { Resources } from "../common/resources";
+import { ResourcesType } from "../common/resources";
 import { sageProvider } from "./sageProvider";
 
 export const prepareForMining = async (
   fleetName: string,
-  resource: Resources,
+  resource: ResourcesType,
   starbaseCoordinates: [number, number]
 ) => {
   const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =

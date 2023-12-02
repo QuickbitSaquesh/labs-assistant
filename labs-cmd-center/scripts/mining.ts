@@ -1,3 +1,7 @@
+// 1. inserisci il nome della flotta
+// 2. inserisci la risorsa che desideri minare
+// 3. inserisci in quale starbase la vuoi minare
+
 import { dockToStarbase } from "../actions/dockToStarbase";
 import { exitSubwarp } from "../actions/exitSubwarp";
 import { loadAmmo } from "../actions/loadAmmo";
@@ -12,16 +16,26 @@ import { MAX_AMOUNT } from "../common/constants";
 import { NotificationMessage } from "../common/notifications";
 import { Resources } from "../common/resources";
 import { actionWrapper } from "../utils/actionWrapper";
+import { inputFleetAndResource } from "../utils/inputFleetAndResource";
 import { prepareForMining } from "../utils/prepareForMining";
 import { sendNotification } from "../utils/sendNotification";
 
 const run = async () => {
-  const fleetName = "CesenaLama";
-  const miningTimeAndResourcesAmount = await prepareForMining(
-    fleetName,
-    Resources.CopperOre,
-    [49, 20]
-  );
+  const { fleetName, fleet, resource, starbaseFrom, starbaseTo } =
+    await inputFleetAndResource();
+
+  const miningTimeAndResourcesAmount = !starbaseTo
+    ? await prepareForMining(
+        fleetName,
+        Resources[resource],
+        fleet.currentSector
+      )
+    : await prepareForMining(
+        fleetName,
+        Resources[resource],
+        starbaseTo as [number, number]
+      );
+
   while (true) {
     try {
       await actionWrapper(loadFuel, fleetName, MAX_AMOUNT);
@@ -33,30 +47,39 @@ const run = async () => {
         miningTimeAndResourcesAmount.food
       );
       await actionWrapper(undockFromStarbase, fleetName);
-      await actionWrapper(subwarpToSector, fleetName, 9, -10);
-      await actionWrapper(exitSubwarp, fleetName);
+      if (starbaseTo) {
+        await actionWrapper(
+          subwarpToSector,
+          fleetName,
+          starbaseTo as [number, number]
+        );
+        await actionWrapper(exitSubwarp, fleetName);
+      }
       await actionWrapper(
         startMining,
         fleetName,
-        Resources.CopperOre,
+        Resources[resource],
         miningTimeAndResourcesAmount.timeInSeconds
       );
-      await actionWrapper(stopMining, fleetName, Resources.CopperOre);
-      await actionWrapper(subwarpToSector, fleetName, -9, 10);
-      await actionWrapper(exitSubwarp, fleetName);
+      await actionWrapper(stopMining, fleetName, Resources[resource]);
+      if (starbaseFrom) {
+        await actionWrapper(
+          subwarpToSector,
+          fleetName,
+          starbaseFrom as [number, number]
+        );
+        await actionWrapper(exitSubwarp, fleetName);
+      }
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(
         unloadCargo,
         fleetName,
-        Resources.CopperOre,
+        Resources[resource],
         MAX_AMOUNT
       );
-      await sendNotification(
-        NotificationMessage.MINING_CARGO_SUCCESS,
-        fleetName
-      );
+      await sendNotification(NotificationMessage.MINING_SUCCESS, fleetName);
     } catch (e) {
-      await sendNotification(NotificationMessage.MINING_CARGO_ERROR, fleetName);
+      await sendNotification(NotificationMessage.MINING_ERROR, fleetName);
     }
   }
 };

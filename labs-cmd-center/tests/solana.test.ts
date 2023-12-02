@@ -15,11 +15,11 @@ beforeAll(async () => {
 
   const connection = new Connection(rpc_url, "confirmed");
   const walletKeypair = Keypair.fromSecretKey(
-    bs58.decode(Bun.env.SOLANA_WALLET_SECRET_KEY || "")
+    bs58.decode(Bun.env.STAR_ATLAS_WALLET_SECRET_KEY || "")
   );
 
   playerPubkey = new PublicKey(
-    Bun.env.STAR_ATLAS_PLAYER_PROFILE || walletKeypair
+    Bun.env.STAR_ATLAS_WALLET_PUBLIC_KEY || walletKeypair
   );
 
   sageGameHandler = new SageGameHandler(walletKeypair, connection);

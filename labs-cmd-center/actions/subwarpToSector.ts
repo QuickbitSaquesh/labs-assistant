@@ -3,8 +3,7 @@ import { sageProvider } from "../utils/sageProvider";
 
 export const subwarpToSector = async (
   fleetName: string,
-  x: number,
-  y: number
+  destinationCoords: [number, number]
 ) => {
   const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
     await sageProvider();
@@ -21,12 +20,12 @@ export const subwarpToSector = async (
   console.log(" ");
   console.log(`Start subwarp...`);
 
-  // Warp the fleet
+  // Subwarp the fleet
   const sectorFrom = fleetAccount.state.Idle?.sector as [BN, BN]; // [0, 0]
-  const sectorTo: [BN, BN] = [
-    sectorFrom[0].add(new BN(x)),
-    sectorFrom[1].add(new BN(y)),
-  ]; // [1, 1]
+  const sectorTo = [
+    new BN(destinationCoords[0]),
+    new BN(destinationCoords[1]),
+  ] as [BN, BN];
 
   console.log(`Subwarp from - X: ${sectorFrom[0]} | Y: ${sectorFrom[1]}`);
   console.log(`Subwarp to - X: ${sectorTo[0]} | Y: ${sectorTo[1]}`);

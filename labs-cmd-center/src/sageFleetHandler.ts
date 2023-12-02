@@ -30,6 +30,7 @@ import {
   getOrCreateAssociatedTokenAccount,
 } from "@staratlas/sage";
 
+import { MAX_AMOUNT } from "../common/constants";
 import { NoEnoughRepairKits } from "../common/errors";
 import { SageGameHandler } from "./sageGameHandler";
 
@@ -353,13 +354,13 @@ export class SageFleetHandler {
 
     const food = Fleet.calculateAsteroidMiningFoodToConsume(
       fleetStats,
-      999_999_999,
+      MAX_AMOUNT,
       timeInSeconds
     );
 
     const ammo = Fleet.calculateAsteroidMiningAmmoToConsume(
       fleetStats,
-      999_999_999,
+      MAX_AMOUNT,
       timeInSeconds
     );
 

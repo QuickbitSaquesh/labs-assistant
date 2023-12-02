@@ -6,6 +6,7 @@ import { startMining } from "../actions/startMining";
 import { stopMining } from "../actions/stopMining";
 import { undockFromStarbase } from "../actions/undockFromStarbase";
 import { unloadCargo } from "../actions/unloadCargo";
+import { MAX_AMOUNT } from "../common/constants";
 import { NotificationMessage } from "../common/notifications";
 import { Resources } from "../common/resources";
 import { actionWrapper } from "../utils/actionWrapper";
@@ -21,8 +22,8 @@ const run = async () => {
   );
   while (true) {
     try {
-      await actionWrapper(loadFuel, fleetName, 999_999);
-      await actionWrapper(loadAmmo, fleetName, 999_999);
+      await actionWrapper(loadFuel, fleetName, MAX_AMOUNT);
+      await actionWrapper(loadAmmo, fleetName, MAX_AMOUNT);
       await actionWrapper(
         loadCargo,
         fleetName,
@@ -38,7 +39,7 @@ const run = async () => {
       );
       await actionWrapper(stopMining, fleetName, Resources.Carbon);
       await actionWrapper(dockToStarbase, fleetName);
-      await actionWrapper(unloadCargo, fleetName, Resources.Carbon, 999_999);
+      await actionWrapper(unloadCargo, fleetName, Resources.Carbon, MAX_AMOUNT);
       await sendNotification(NotificationMessage.MINING_SUCCESS, fleetName);
     } catch (e) {
       await sendNotification(NotificationMessage.MINING_ERROR, fleetName);

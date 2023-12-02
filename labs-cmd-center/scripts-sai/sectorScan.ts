@@ -7,6 +7,7 @@ import { scan } from "../actions/scan";
 import { subwarpToSector } from "../actions/subwarpToSector";
 import { undockFromStarbase } from "../actions/undockFromStarbase";
 import { unloadCargo } from "../actions/unloadCargo";
+import { MAX_AMOUNT } from "../common/constants";
 import { NoEnoughRepairKits } from "../common/errors";
 import { NotificationMessage } from "../common/notifications";
 import { Resources } from "../common/resources";
@@ -46,7 +47,7 @@ const backToStarbase = async (fleet: FleetScan) => {
   );
   await actionWrapper(exitSubwarp, fleet.name);
   await actionWrapper(dockToStarbase, fleet.name);
-  await actionWrapper(unloadCargo, fleet.name, Resources.Sdu, 999_999);
+  await actionWrapper(unloadCargo, fleet.name, Resources.Sdu, MAX_AMOUNT);
   await sendNotification(NotificationMessage.SCAN_SUCCESS, fleet.name);
 };
 
@@ -75,8 +76,8 @@ const run = async () => {
   console.log("Scan operations started!");
   while (true) {
     try {
-      await actionWrapper(loadCargo, fleet.name, Resources.Tool, 999_999);
-      await actionWrapper(loadFuel, fleet.name, 999_999);
+      await actionWrapper(loadCargo, fleet.name, Resources.Tool, MAX_AMOUNT);
+      await actionWrapper(loadFuel, fleet.name, MAX_AMOUNT);
       await actionWrapper(undockFromStarbase, fleet.name);
       await actionWrapper(
         subwarpToSector,

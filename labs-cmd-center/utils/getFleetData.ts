@@ -12,6 +12,8 @@ export const getFleetData = async (fleetName: string): Promise<FleetData> => {
     fleetName
   );
 
+  console.log(fleetPubkey);
+
   const fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
 
   let coordinates;

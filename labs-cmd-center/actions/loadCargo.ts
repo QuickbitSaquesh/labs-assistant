@@ -1,9 +1,9 @@
-import { Resources } from "../common/resources";
+import { ResourceType } from "../common/resources";
 import { sageProvider } from "../utils/sageProvider";
 
 export const loadCargo = async (
   fleetName: string,
-  resourceName: Resources,
+  resourceName: ResourceType,
   amount: number
 ) => {
   const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
@@ -15,7 +15,7 @@ export const loadCargo = async (
   );
 
   console.log(" ");
-  console.log("Loading cargo to fleet...");
+  console.log(`Loading ${amount} ${resourceName} to fleet cargo...`);
 
   const mintToken = sageGameHandler.getResourceMintAddress(resourceName);
 
@@ -25,7 +25,13 @@ export const loadCargo = async (
       mintToken,
       amount
     );
-    if (ix.type != "Success") throw new Error(ix.type);
+    if (ix.type == "FleetCargoIsFull") {
+      console.log("Your fleet cargo is full");
+      return;
+    } else if (ix.type == "StarbaseCargoPodTokenAccountNotFound") {
+      console.log("Not enough resources in starbase");
+      return;
+    } else if (ix.type != "Success") throw new Error(ix.type);
 
     let tx = await sageGameHandler.buildAndSignTransaction(ix.ixs);
 

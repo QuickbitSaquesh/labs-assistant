@@ -1,7 +1,3 @@
-// 1. inserisci il nome della flotta
-// 2. inserisci la risorsa che desideri minare
-// 3. inserisci in quale starbase la vuoi minare
-
 import { dockToStarbase } from "../actions/dockToStarbase";
 import { exitSubwarp } from "../actions/exitSubwarp";
 import { loadAmmo } from "../actions/loadAmmo";
@@ -14,27 +10,32 @@ import { undockFromStarbase } from "../actions/undockFromStarbase";
 import { unloadCargo } from "../actions/unloadCargo";
 import { MAX_AMOUNT } from "../common/constants";
 import { NotificationMessage } from "../common/notifications";
-import { Resources } from "../common/resources";
+import { Resource } from "../common/resources";
+import { SectorCoordinates } from "../common/types";
 import { actionWrapper } from "../utils/actionWrapper";
-import { inputFleetAndResource } from "../utils/inputFleetAndResource";
+import { calcSectorsDistanceByCoords } from "../utils/calcSectorsDistanceByCoords";
+import { inputForMining } from "../utils/inputForMining";
 import { prepareForMining } from "../utils/prepareForMining";
 import { sendNotification } from "../utils/sendNotification";
 
 const run = async () => {
-  const { fleetName, fleet, resource, starbaseFrom, starbaseTo } =
-    await inputFleetAndResource();
+  const { fleetName, fleetData, resourceToMine, sectorTo } =
+    await inputForMining();
 
-  const miningTimeAndResourcesAmount = !starbaseTo
+  const miningTimeAndResourcesAmount = !sectorTo
     ? await prepareForMining(
         fleetName,
-        Resources[resource],
-        fleet.currentSector
+        Resource[resourceToMine],
+        fleetData.currentSector
       )
-    : await prepareForMining(
-        fleetName,
-        Resources[resource],
-        starbaseTo as [number, number]
-      );
+    : await prepareForMining(fleetName, Resource[resourceToMine], sectorTo);
+
+  const distanceCoords =
+    sectorTo && calcSectorsDistanceByCoords(fleetData.currentSector, sectorTo);
+
+  const reverseDistanceCoords =
+    distanceCoords &&
+    (distanceCoords.map((item) => item.neg()) as SectorCoordinates);
 
   while (true) {
     try {
@@ -43,38 +44,30 @@ const run = async () => {
       await actionWrapper(
         loadCargo,
         fleetName,
-        Resources.Food,
+        Resource.Food,
         miningTimeAndResourcesAmount.food
       );
       await actionWrapper(undockFromStarbase, fleetName);
-      if (starbaseTo) {
-        await actionWrapper(
-          subwarpToSector,
-          fleetName,
-          starbaseTo as [number, number]
-        );
+      if (sectorTo && distanceCoords) {
+        await actionWrapper(subwarpToSector, fleetName, distanceCoords);
         await actionWrapper(exitSubwarp, fleetName);
       }
       await actionWrapper(
         startMining,
         fleetName,
-        Resources[resource],
+        Resource[resourceToMine],
         miningTimeAndResourcesAmount.timeInSeconds
       );
-      await actionWrapper(stopMining, fleetName, Resources[resource]);
-      if (starbaseFrom) {
-        await actionWrapper(
-          subwarpToSector,
-          fleetName,
-          starbaseFrom as [number, number]
-        );
+      await actionWrapper(stopMining, fleetName, Resource[resourceToMine]);
+      if (sectorTo && reverseDistanceCoords) {
+        await actionWrapper(subwarpToSector, fleetName, reverseDistanceCoords);
         await actionWrapper(exitSubwarp, fleetName);
       }
       await actionWrapper(dockToStarbase, fleetName);
       await actionWrapper(
         unloadCargo,
         fleetName,
-        Resources[resource],
+        Resource[resourceToMine],
         MAX_AMOUNT
       );
       await sendNotification(NotificationMessage.MINING_SUCCESS, fleetName);

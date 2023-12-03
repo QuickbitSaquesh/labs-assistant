@@ -1,4 +1,4 @@
-export const Resources = {
+export const Resource = {
   Food: "food",
   Fuel: "fuel",
   Ammo: "ammo",
@@ -13,7 +13,7 @@ export const Resources = {
   Lumanite: "lumanite",
   Rochinol: "rochinol",
   Sdu: "sdu",
-};
+} as const;
 
-export type ResourcesKey = keyof typeof Resources;
-export type ResourcesType = (typeof Resources)[keyof typeof Resources];
+export type ResourceKey = keyof typeof Resource;
+export type ResourceType = (typeof Resource)[keyof typeof Resource];

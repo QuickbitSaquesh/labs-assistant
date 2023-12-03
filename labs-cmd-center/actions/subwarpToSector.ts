@@ -1,9 +1,9 @@
-import { BN } from "@project-serum/anchor";
+import { SectorCoordinates } from "../common/types";
 import { sageProvider } from "../utils/sageProvider";
 
 export const subwarpToSector = async (
   fleetName: string,
-  destinationCoords: [number, number]
+  distanceCoords: SectorCoordinates
 ) => {
   const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
     await sageProvider();
@@ -13,19 +13,16 @@ export const subwarpToSector = async (
     fleetName
   );
 
-  // Get the fleet account
   let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
-  //console.log(`Fleet state: ${JSON.stringify(fleetAccount.state)}`);
 
   console.log(" ");
   console.log(`Start subwarp...`);
 
-  // Subwarp the fleet
-  const sectorFrom = fleetAccount.state.Idle?.sector as [BN, BN]; // [0, 0]
-  const sectorTo = [
-    new BN(destinationCoords[0]),
-    new BN(destinationCoords[1]),
-  ] as [BN, BN];
+  const sectorFrom = fleetAccount.state.Idle?.sector as SectorCoordinates;
+  const sectorTo: SectorCoordinates = [
+    sectorFrom[0].add(distanceCoords[0]),
+    sectorFrom[1].add(distanceCoords[1]),
+  ];
 
   console.log(`Subwarp from - X: ${sectorFrom[0]} | Y: ${sectorFrom[1]}`);
   console.log(`Subwarp to - X: ${sectorTo[0]} | Y: ${sectorTo[1]}`);
@@ -38,12 +35,10 @@ export const subwarpToSector = async (
     sectorTo
   );
 
-  // Instruct the fleet to subwarp to coordinate
   let ix = await sageFleetHandler.ixSubwarpToCoordinate(fleetPubkey, sectorTo);
   let tx = await sageGameHandler.buildAndSignTransaction(ix);
   let rx = await sageGameHandler.sendTransaction(tx);
 
-  // Check that the transaction was a success, if not abort
   if (!rx.value.isOk()) {
     throw Error("Fleet failed to subwarp");
   }

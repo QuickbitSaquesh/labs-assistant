@@ -1,5 +1,5 @@
 import { BN } from "@project-serum/anchor";
-import { FleetData } from "../common/types";
+import { FleetData, SectorCoordinates } from "../common/types";
 import { getStarbaseDataByPubkey } from "./getStarbaseDataByPubkey";
 import { sageProvider } from "./sageProvider";
 
@@ -17,21 +17,22 @@ export const getFleetData = async (fleetName: string): Promise<FleetData> => {
   let coordinates;
 
   if (fleetAccount.state.MoveSubwarp) {
-    coordinates = fleetAccount.state.MoveSubwarp.currentSector as [BN, BN];
+    coordinates = fleetAccount.state.MoveSubwarp
+      .currentSector as SectorCoordinates;
   }
   if (fleetAccount.state.StarbaseLoadingBay) {
     coordinates = (
       await getStarbaseDataByPubkey(
         fleetAccount.state.StarbaseLoadingBay.starbase
       )
-    ).starbaseAccount.data.sector as [BN, BN];
+    ).starbaseAccount.data.sector as SectorCoordinates;
     coordinates = [
-      parseInt(coordinates[0], 10),
-      parseInt(coordinates[1], 10),
-    ] as [BN, BN];
+      new BN(parseInt(coordinates[0], 10)),
+      new BN(parseInt(coordinates[1], 10)),
+    ] as SectorCoordinates;
   }
   if (fleetAccount.state.Idle) {
-    coordinates = fleetAccount.state.Idle.sector as [BN, BN];
+    coordinates = fleetAccount.state.Idle.sector as SectorCoordinates;
   }
 
   return { fleetName, fleetPubkey, fleetAccount, currentSector: coordinates };

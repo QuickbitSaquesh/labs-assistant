@@ -1,17 +1,17 @@
 import { NotificationMessage } from "../common/notifications";
-import { ResourcesType } from "../common/resources";
+import { ResourceType } from "../common/resources";
 
 export const sendNotification = async (
   notification: NotificationMessage,
   fleetName?: string,
-  resource?: ResourcesType,
+  resourceName?: ResourceType,
   amount?: number
 ) => {
-  if (Bun.env.MAKE_HOOK) {
-    const url = Bun.env.MAKE_HOOK as string;
+  if (Bun.env.NOTIFICATION_HOOK) {
+    const url = Bun.env.NOTIFICATION_HOOK as string;
     const payload = {
       message: fleetName ? `${fleetName}: ${notification}` : notification,
-      resource,
+      resourceName,
       amount,
       fleetName,
     };

@@ -1,11 +1,11 @@
-import { BN } from "@project-serum/anchor";
-import { ResourcesType } from "../common/resources";
+import { ResourceType } from "../common/resources";
+import { SectorCoordinates } from "../common/types";
 import { sageProvider } from "./sageProvider";
 
 export const prepareForMining = async (
   fleetName: string,
-  resource: ResourcesType,
-  starbaseCoordinates: [number, number]
+  resourceName: ResourceType,
+  starbaseCoords: SectorCoordinates
 ) => {
   const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
     await sageProvider();
@@ -18,8 +18,8 @@ export const prepareForMining = async (
   const miningAssets =
     await sageFleetHandler.getTimeAndNeededResourcesToFullCargoInMining(
       fleetPubkey,
-      resource,
-      [new BN(starbaseCoordinates[0]), new BN(starbaseCoordinates[1])]
+      resourceName,
+      starbaseCoords
     );
 
   return miningAssets;

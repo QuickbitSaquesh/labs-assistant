@@ -1,10 +1,10 @@
 import { BN } from "@project-serum/anchor";
-import { Resources } from "../common/resources";
+import { ResourceType } from "../common/resources";
 import { sageProvider } from "../utils/sageProvider";
 
 export const unloadCargo = async (
   fleetName: string,
-  resource: Resources,
+  resourceName: ResourceType,
   amount: BN
 ) => {
   const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
@@ -16,9 +16,9 @@ export const unloadCargo = async (
   );
 
   console.log(" ");
-  console.log("Unloading cargo from fleet...");
+  console.log(`Unloading ${amount} ${resourceName} from fleet cargo...`);
 
-  const mintToken = sageGameHandler.getResourceMintAddress(resource);
+  const mintToken = sageGameHandler.getResourceMintAddress(resourceName);
 
   try {
     let ix = await sageFleetHandler.ixWithdrawCargoFromFleet(

@@ -16,7 +16,6 @@ export const inputFleetAndResource = async () => {
   while (true) {
     fleetName = await askQuestion("Inserisci il nome della flotta: "); // Nome della flotta
     try {
-      console.log("Hey");
       fleet = await getFleetData(fleetName);
       if (
         !fleet.currentSector ||
@@ -34,6 +33,7 @@ export const inputFleetAndResource = async () => {
       );
       console.log("");
     } catch (e) {
+      console.log(e);
       continue;
     }
     break;

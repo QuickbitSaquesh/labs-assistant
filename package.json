@@ -5,9 +5,12 @@
   "scripts": {
     "build": "rm -rf dist && bun build --outdir=dist --sourcemap=external --target=node --splitting index.ts",
     "start": "bun run server.ts",
-    "watch": "bun --watch server.ts"
+    "watch": "bun --watch server.ts",
+    "mining": "bun run ./scripts/mining.ts",
+    "cargo": "bun run ./scripts/cargo.ts"
   },
   "devDependencies": {
+    "@types/inquirer": "^9.0.7",
     "bun-types": "latest"
   },
   "peerDependencies": {
@@ -21,6 +24,7 @@
     "bigint": "^0.4.2",
     "bigint-buffer": "^1.1.5",
     "bs58": "^5.0.0",
-    "fp-ts": "^2.16.1"
+    "fp-ts": "^2.16.1",
+    "inquirer": "^9.2.12"
   }
 }

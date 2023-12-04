@@ -2,7 +2,7 @@ import { BN } from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { Fleet, Starbase } from "@staratlas/sage";
 import { ResourceKey, ResourceType } from "./resources";
-import { StarbaseCoordsKey } from "./starbases";
+import { StarbaseInfoKey } from "./starbases";
 
 export type LabsAction<R, A extends any[]> = (...args: A) => Promise<R>;
 
@@ -41,6 +41,6 @@ export type InputResourcesForCargo = {
 export type SectorCoordinates = [BN, BN];
 
 export type StarbaseResourceToMine = {
-  starbaseDestination: StarbaseCoordsKey;
+  starbaseDestination: StarbaseInfoKey;
   resourceToMine: ResourceKey;
 };

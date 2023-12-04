@@ -1,8 +1,3 @@
-// 1. Inserisci la flotta che intendi utilizzare
-// 2. Inserisci dove vuoi andare (MUD3)
-// 3. Inserisci quali risorse vuoi portare a destinazione (Tools 1230, Fuel 5642)
-// 4. Inserisci come vuoi riempire il cargo di ritorno (Carbon 50%, Hydrogen 30%, Lumanite 20%)
-
 import { dockToStarbase } from "../actions/dockToStarbase";
 import { exitSubwarp } from "../actions/exitSubwarp";
 import { loadAmmo } from "../actions/loadAmmo";

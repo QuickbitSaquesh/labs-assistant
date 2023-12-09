@@ -6,6 +6,6 @@ export enum NotificationMessage {
   MINING_ERROR = "An ERROR occurred during MINING",
   MINING_CARGO_ERROR = "An ERROR occurred during the MINING and TRANSPORT cycle",
   SCAN_ERROR = "An ERROR occurred during SCANNING",
-  FAIL_WARNING = "An action has FAILED and is REPEATING. If the problem persists, intervene to resolve the issue",
+  FAIL_WARNING = "An action has FAILED and is REPEATING. If the problem persists, set the fleet in the required state",
   SCAN_SUCCESS = "SDUs have been successfully deposited in Starbase",
 }

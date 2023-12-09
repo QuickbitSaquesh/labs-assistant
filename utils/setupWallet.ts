@@ -1,22 +1,13 @@
-import { Connection, Keypair, PublicKey } from "@solana/web3.js";
-import bs58 from "bs58";
+import { Connection, Keypair } from "@solana/web3.js";
+import { readFileSync } from "fs";
+import { keypairPath, rpcPath } from "../common/constants";
 
 export const setupWallet = async () => {
-  const rpc_url = Bun.env.SOLANA_RPC_URL ?? "http://localhost:8899";
-  const connection = new Connection(rpc_url, "confirmed");
-  const secretKey = Bun.env.STAR_ATLAS_WALLET_SECRET_KEY;
+  const rpcUrl = readFileSync(rpcPath).toString();
+  const connection = new Connection(rpcUrl, "confirmed");
+  const secretKey = JSON.parse(readFileSync(keypairPath).toString());
 
-  if (!secretKey) {
-    throw new Error(
-      "STAR_ATLAS_WALLET_SECRET_KEY environment variable is not set"
-    );
-  }
-
-  const walletKeypair = Keypair.fromSecretKey(bs58.decode(secretKey));
-
-  if (!PublicKey.isOnCurve(walletKeypair.publicKey.toBytes())) {
-    throw Error("wallet keypair is not on curve");
-  }
+  const walletKeypair = Keypair.fromSecretKey(Uint8Array.from(secretKey));
 
   return { connection, walletKeypair };
 };

@@ -16,7 +16,7 @@ export const buildAndSignTransactionAndCheck = async (
   if (tx.type !== "Success") {
     switch (tx.type) {
       case "NoEnoughTokensToPerformLabsAction":
-        console.log("No enough QTR to perform labs action");
+        console.log("No enough QTTR to perform labs action");
         throw new NoEnoughTokensToPerformLabsAction();
       case "BuildAndSignTransactionError":
         console.log("Error in building and signing this transaction");

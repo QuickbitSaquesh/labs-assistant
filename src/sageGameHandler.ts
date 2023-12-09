@@ -476,13 +476,13 @@ export class SageGameHandler {
       const tokenBalance =
         await this.provider.connection.getTokenAccountBalance(fromATA);
 
-      console.log(`You have ${tokenBalance.value.amount} QTR`);
+      console.log(`You have ${tokenBalance.value.amount} QTTR`);
       return {
         type: "Success" as const,
         tokenBalance: tokenBalance.value.uiAmount,
       };
     } catch (e) {
-      console.log("Unable to fetch QTR balance");
+      console.log("Unable to fetch QTTR balance");
       return { type: "UnableToLoadBalance" as const };
     }
   }
@@ -520,21 +520,29 @@ export class SageGameHandler {
   }
 
   async sendTransaction(tx: TransactionReturn) {
-    const result = await sendTransaction(tx, this.connection, {
-      commitment: "confirmed",
-      sendOptions: {
-        skipPreflight: false,
-      },
-    });
+    try {
+      const result = await sendTransaction(tx, this.connection, {
+        commitment: "confirmed",
+        sendOptions: {
+          skipPreflight: false,
+          maxRetries: 0,
+        },
+      });
 
-    if (result.value.isErr()) {
+      if (result.value.isErr()) {
+        return {
+          type: "SendTransactionFailed" as const,
+          result: result.value.error,
+        };
+      }
+
+      const txSignature = result.value.value;
+      return { type: "Success" as const, result: txSignature };
+    } catch (e) {
       return {
         type: "SendTransactionFailed" as const,
-        result: result.value.error,
+        result: e,
       };
     }
-
-    const txSignature = result.value.value;
-    return { type: "Success" as const, result: txSignature };
   }
 }

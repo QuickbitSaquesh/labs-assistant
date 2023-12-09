@@ -10,10 +10,9 @@ export const sendTransactionAndCheck = async (
   let rx = await sageGameHandler.sendTransaction(tx);
 
   if (rx.type !== "Success") {
-    console.log(
-      `${errorMessage}. Error code: ${rx.result}` ??
-        `Transaction failed to send. Error code: ${rx.result}`
-    );
+    errorMessage
+      ? console.log(`${errorMessage}`)
+      : console.log(`Transaction failed to send`);
     throw new SendTransactionFailed();
   }
 

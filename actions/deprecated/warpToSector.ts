@@ -1,7 +1,7 @@
 import { BN } from "@project-serum/anchor";
-import { sageProvider } from "../utils/sageProvider";
-import { buildAndSignTransactionAndCheck } from "../utils/transactions/buildAndSignTransactionAndCheck";
-import { sendTransactionAndCheck } from "../utils/transactions/sendTransactionAndCheck";
+import { sageProvider } from "../../utils/sageProvider";
+import { buildAndSignTransactionAndCheck } from "../../utils/transactions/buildAndSignTransactionAndCheck";
+import { sendTransactionAndCheck } from "../../utils/transactions/sendTransactionAndCheck";
 
 // TODO: Need refactoring - current version is deprecated
 export const warpToSector = async (

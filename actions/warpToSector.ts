@@ -1,6 +1,9 @@
 import { BN } from "@project-serum/anchor";
 import { sageProvider } from "../utils/sageProvider";
+import { buildAndSignTransactionAndCheck } from "../utils/transactions/buildAndSignTransactionAndCheck";
+import { sendTransactionAndCheck } from "../utils/transactions/sendTransactionAndCheck";
 
+// TODO: Need refactoring - current version is deprecated
 export const warpToSector = async (
   fleetName: string,
   x: number,
@@ -43,13 +46,8 @@ export const warpToSector = async (
 
   // Instruct the fleet to warp to coordinate
   let ix = await sageFleetHandler.ixWarpToCoordinate(fleetPubkey, sectorTo);
-  let tx = await sageGameHandler.buildAndSignTransaction(ix);
-  let rx = await sageGameHandler.sendTransaction(tx);
-
-  // Check that the transaction was a success, if not abort
-  if (!rx.value.isOk()) {
-    throw Error("Fleet failed to warp");
-  }
+  let tx = await buildAndSignTransactionAndCheck(ix);
+  let rx = await sendTransactionAndCheck(tx, "Fleet failed to warp");
 
   console.log(`Waiting for ${time} seconds...`);
   await new Promise((resolve) => setTimeout(resolve, time * 1000));

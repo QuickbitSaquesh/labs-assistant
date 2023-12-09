@@ -1,50 +1,35 @@
+import { PublicKey } from "@solana/web3.js";
 import { SectorCoordinates } from "../common/types";
+import { wait } from "../utils/actions/wait";
 import { sageProvider } from "../utils/sageProvider";
+import { buildAndSignTransactionAndCheck } from "../utils/transactions/buildAndSignTransactionAndCheck";
+import { sendTransactionAndCheck } from "../utils/transactions/sendTransactionAndCheck";
 
 export const subwarpToSector = async (
-  fleetName: string,
+  fleetPubkey: PublicKey,
   distanceCoords: SectorCoordinates
 ) => {
-  const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
-    await sageProvider();
-
-  const fleetPubkey = await sageGameHandler.getFleetAddress(
-    playerProfilePubkey,
-    fleetName
-  );
-
-  let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
+  const { sageGameHandler, sageFleetHandler } = await sageProvider();
 
   console.log(" ");
   console.log(`Start subwarp...`);
 
-  const sectorFrom = fleetAccount.state.Idle?.sector as SectorCoordinates;
-  const sectorTo: SectorCoordinates = [
-    sectorFrom[0].add(distanceCoords[0]),
-    sectorFrom[1].add(distanceCoords[1]),
-  ];
-
-  console.log(`Subwarp from - X: ${sectorFrom[0]} | Y: ${sectorFrom[1]}`);
-  console.log(`Subwarp to - X: ${sectorTo[0]} | Y: ${sectorTo[1]}`);
-
-  if (sectorFrom[0].eq(sectorTo[0]) && sectorFrom[1].eq(sectorTo[1])) return;
-
-  const timeToSubwarp = await sageFleetHandler.getTimeToSubwarp(
+  let ix = await sageFleetHandler.ixSubwarpToCoordinate(
     fleetPubkey,
-    sectorFrom,
-    sectorTo
+    distanceCoords
   );
-
-  let ix = await sageFleetHandler.ixSubwarpToCoordinate(fleetPubkey, sectorTo);
-  let tx = await sageGameHandler.buildAndSignTransaction(ix);
-  let rx = await sageGameHandler.sendTransaction(tx);
-
-  if (!rx.value.isOk()) {
-    throw Error("Fleet failed to subwarp");
+  if (ix.type !== "Success") {
+    throw new Error(ix.type);
   }
 
-  console.log(`Waiting for ${timeToSubwarp} seconds...`);
-  await new Promise((resolve) => setTimeout(resolve, timeToSubwarp * 1000));
-
-  console.log(`Subwarp completed!`);
+  try {
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    await sendTransactionAndCheck(tx, "Fleet failed to subwarp");
+    console.log(`Waiting for ${ix.timeToSubwarp} seconds...`);
+    await sageGameHandler.getQuattrinoBalance();
+    await wait(ix.timeToSubwarp);
+    console.log(`Subwarp completed!`);
+  } catch (e) {
+    throw e;
+  }
 };

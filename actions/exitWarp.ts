@@ -1,30 +1,21 @@
+import { PublicKey } from "@solana/web3.js";
 import { sageProvider } from "../utils/sageProvider";
+import { buildAndSignTransactionAndCheck } from "../utils/transactions/buildAndSignTransactionAndCheck";
+import { sendTransactionAndCheck } from "../utils/transactions/sendTransactionAndCheck";
 
-export const exitWarp = async (fleetName: string) => {
-  const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
-    await sageProvider();
+// TODO: Need refactoring - current version is deprecated
+export const exitWarp = async (fleetPubkey: PublicKey) => {
+  const { sageFleetHandler } = await sageProvider();
 
-  const fleetPubkey = await sageGameHandler.getFleetAddress(
-    playerProfilePubkey,
-    fleetName
-  );
-
-  // Get the fleet account
+  // TODO: move to ix
   let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
-
-  // Check that the fleet is warping, abort if not
   if (!fleetAccount.state.MoveWarp) return;
 
   // Instruct the fleet to exit warp
   let ix = await sageFleetHandler.ixReadyToExitWarp(fleetPubkey);
   if (!ix) return;
-  let tx = await sageGameHandler.buildAndSignTransaction(ix);
-  let rx = await sageGameHandler.sendTransaction(tx);
-
-  // Check that the transaction was a success, if not abort
-  if (!rx.value.isOk()) {
-    throw Error("Fleet failed to exit warp");
-  }
+  let tx = await buildAndSignTransactionAndCheck(ix);
+  await sendTransactionAndCheck(tx, "Fleet failed to exit warp");
 
   console.log(" ");
   console.log(`Exit warp completed!`);

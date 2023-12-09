@@ -1,3 +1,5 @@
+import { byteArrayToString } from "@staratlas/data-source";
+import { Fleet } from "@staratlas/sage";
 import { dockToStarbase } from "../actions/dockToStarbase";
 import { exitSubwarp } from "../actions/exitSubwarp";
 import { loadAmmo } from "../actions/loadAmmo";
@@ -8,67 +10,82 @@ import { undockFromStarbase } from "../actions/undockFromStarbase";
 import { unloadCargo } from "../actions/unloadCargo";
 import { MAX_AMOUNT } from "../common/constants";
 import { NotificationMessage } from "../common/notifications";
-import { SectorCoordinates } from "../common/types";
-import { actionWrapper } from "../utils/actionWrapper";
-import { calcSectorsDistanceByCoords } from "../utils/calcSectorsDistanceByCoords";
-import { inputForCargo } from "../utils/inputForCargo";
-import { sendNotification } from "../utils/sendNotification";
+import { InputResourcesForCargo, SectorCoordinates } from "../common/types";
+import { actionWrapper } from "../utils/actions/actionWrapper";
+import { sendNotification } from "../utils/actions/sendNotification";
+import { setCargoInputs } from "../utils/inputs/setCargoInputs";
+import { calcSectorsDistanceByCoords } from "../utils/sectors/calcSectorsDistanceByCoords";
 
-const run = async () => {
-  const {
-    fleetName,
-    fleetData,
-    sectorTo,
-    resourcesToDestination,
-    resourcesToStarbase,
-  } = await inputForCargo();
+export const cargo = async (fleet: Fleet, position: SectorCoordinates) => {
+  // 1. prendere in input tutti i dati necessari per il trasporto cargo
+  // - dove vuoi andare
+  // - quali risorse vuoi trasportare (andata)
+  // - quali risorse vuoi trasportare (ritorno)
+  // - vuoi spostarti in warp o subwarp (calcolare la rotta)
+  const { starbaseTo, resourcesToDestination, resourcesToStarbase } =
+    await setCargoInputs(position);
+
+  // 2. calcolare tutti i dati necessari correlati agli input
+  const fleetPubkey = fleet.key;
+  const fleetName = byteArrayToString(fleet.data.fleetLabel);
 
   const distanceCoords =
-    sectorTo && calcSectorsDistanceByCoords(fleetData.currentSector, sectorTo);
+    starbaseTo && calcSectorsDistanceByCoords(position, starbaseTo);
 
   const reverseDistanceCoords =
     distanceCoords &&
     (distanceCoords.map((item) => item.neg()) as SectorCoordinates);
 
+  const effectiveResourcesToDestination: InputResourcesForCargo[] = [];
+  const effectiveResourcesToStarbase: InputResourcesForCargo[] = [];
+  // 3. avviare l'automazione utilizzando i dati forniti dall'utente
   while (true) {
     try {
-      await actionWrapper(loadFuel, fleetName, MAX_AMOUNT);
-      await actionWrapper(loadAmmo, fleetName, MAX_AMOUNT);
+      await actionWrapper(loadFuel, fleetPubkey, MAX_AMOUNT);
+      await actionWrapper(loadAmmo, fleetPubkey, MAX_AMOUNT);
 
       for (const item of resourcesToDestination) {
-        await actionWrapper(loadCargo, fleetName, item.resource, item.amount);
+        await actionWrapper(loadCargo, fleetPubkey, item.resource, item.amount);
+        effectiveResourcesToDestination.push(item);
       }
 
-      await actionWrapper(undockFromStarbase, fleetName);
-      await actionWrapper(subwarpToSector, fleetName, distanceCoords);
-      await actionWrapper(exitSubwarp, fleetName);
-      await actionWrapper(dockToStarbase, fleetName);
+      await actionWrapper(undockFromStarbase, fleetPubkey);
+      await actionWrapper(subwarpToSector, fleetPubkey, distanceCoords);
+      await actionWrapper(exitSubwarp, fleetPubkey);
+      await actionWrapper(dockToStarbase, fleetPubkey);
 
-      for (const item of resourcesToDestination) {
-        await actionWrapper(unloadCargo, fleetName, item.resource, item.amount);
+      for (const item of effectiveResourcesToDestination) {
+        await actionWrapper(
+          unloadCargo,
+          fleetPubkey,
+          item.resource,
+          item.amount
+        );
       }
 
       for (const item of resourcesToStarbase) {
-        await actionWrapper(loadCargo, fleetName, item.resource, item.amount);
+        await actionWrapper(loadCargo, fleetPubkey, item.resource, item.amount);
+        effectiveResourcesToStarbase.push(item);
       }
 
-      await actionWrapper(undockFromStarbase, fleetName);
-      await actionWrapper(subwarpToSector, fleetName, reverseDistanceCoords);
-      await actionWrapper(exitSubwarp, fleetName);
-      await actionWrapper(dockToStarbase, fleetName);
+      await actionWrapper(undockFromStarbase, fleetPubkey);
+      await actionWrapper(subwarpToSector, fleetPubkey, reverseDistanceCoords);
+      await actionWrapper(exitSubwarp, fleetPubkey);
+      await actionWrapper(dockToStarbase, fleetPubkey);
 
-      for (const item of resourcesToStarbase) {
-        await actionWrapper(unloadCargo, fleetName, item.resource, item.amount);
+      for (const item of effectiveResourcesToStarbase) {
+        await actionWrapper(
+          unloadCargo,
+          fleetPubkey,
+          item.resource,
+          item.amount
+        );
       }
 
       await sendNotification(NotificationMessage.CARGO_SUCCESS, fleetName);
     } catch (e) {
       await sendNotification(NotificationMessage.CARGO_ERROR, fleetName);
+      break;
     }
   }
 };
-
-run().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});

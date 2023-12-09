@@ -1,6 +1,6 @@
 import inquirer from "inquirer";
-import { Resource, ResourceKey } from "../common/resources";
-import { InputResourcesForCargo } from "../common/types";
+import { Resource, ResourceKey } from "../../common/resources";
+import { InputResourcesForCargo } from "../../common/types";
 
 const processInput = async (
   input: string
@@ -27,7 +27,7 @@ const processInput = async (
   return resources;
 };
 
-export const getValidResources = async (
+export const setResourcesAmount = async (
   promptMessage: string
 ): Promise<InputResourcesForCargo[]> => {
   const answers = await inquirer.prompt([

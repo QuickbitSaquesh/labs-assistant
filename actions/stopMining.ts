@@ -1,33 +1,25 @@
-import { Resources } from "../common/resources";
+import { PublicKey } from "@solana/web3.js";
 import { sageProvider } from "../utils/sageProvider";
+import { buildAndSignTransactionAndCheck } from "../utils/transactions/buildAndSignTransactionAndCheck";
+import { sendTransactionAndCheck } from "../utils/transactions/sendTransactionAndCheck";
 
-export const stopMining = async (fleetName: string, resource: Resources) => {
-  const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
-    await sageProvider();
+export const stopMining = async (fleetPubkey: PublicKey, resource: string) => {
+  const { sageGameHandler, sageFleetHandler } = await sageProvider();
 
-  // Get fleet public key
-  let fleetPubkey = await sageGameHandler.getFleetAddress(
-    playerProfilePubkey,
-    fleetName
-  );
+  console.log(" ");
+  console.log(`Stop mining ${resource}...`);
 
-  // Get the fleet account
-  let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
+  let ix = await sageFleetHandler.ixStopMining(fleetPubkey);
+  if (ix.type !== "Success") {
+    throw new Error(ix.type);
+  }
 
-  if (fleetAccount.state.MineAsteroid) {
-    console.log(" ");
-    console.log(`Stop mining ${resource}...`);
-
-    // Instruct the fleet to stop mining
-    let ix = await sageFleetHandler.ixStopMining(fleetPubkey);
-    let tx = await sageGameHandler.buildAndSignTransaction(ix);
-    let rx = await sageGameHandler.sendTransaction(tx);
-
-    // Check that the transaction was a success, if not abort
-    if (!rx.value.isOk()) {
-      throw Error("Fleet failed to stop mining");
-    }
-
+  try {
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    await sendTransactionAndCheck(tx, "Fleet failed to stop mining");
     console.log(`Mining stopped!`);
+    await sageGameHandler.getQuattrinoBalance();
+  } catch (e) {
+    throw e;
   }
 };

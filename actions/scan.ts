@@ -1,18 +1,16 @@
+import { PublicKey } from "@solana/web3.js";
 import { sageProvider } from "../utils/sageProvider";
+import { buildAndSignTransactionAndCheck } from "../utils/transactions/buildAndSignTransactionAndCheck";
+import { sendTransactionAndCheck } from "../utils/transactions/sendTransactionAndCheck";
 
-export const scan = async (fleetName: string) => {
-  const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
-    await sageProvider();
-
-  const fleetPubkey = sageGameHandler.getFleetAddress(
-    playerProfilePubkey,
-    fleetName
-  );
+// TODO: Need refactoring - current version is deprecated
+export const scan = async (fleetPubkey: PublicKey) => {
+  const { sageFleetHandler } = await sageProvider();
 
   try {
     let ix = await sageFleetHandler.ixScanForSurveyDataUnits(fleetPubkey);
-    let tx = await sageGameHandler.buildAndSignTransaction(ix.ixs);
-    let rx = await sageGameHandler.sendTransaction(tx);
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    let rx = await sendTransactionAndCheck(tx);
     if (!rx.value.isOk()) {
       switch (ix.type) {
         case "CreateSduTokenAccount":

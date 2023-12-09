@@ -1,44 +1,41 @@
+import { PublicKey } from "@solana/web3.js";
 import { ResourceType } from "../common/resources";
 import { sageProvider } from "../utils/sageProvider";
+import { buildAndSignTransactionAndCheck } from "../utils/transactions/buildAndSignTransactionAndCheck";
+import { sendTransactionAndCheck } from "../utils/transactions/sendTransactionAndCheck";
 
 export const loadCargo = async (
-  fleetName: string,
+  fleetPubkey: PublicKey,
   resourceName: ResourceType,
   amount: number
 ) => {
-  const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
-    await sageProvider();
-
-  const fleetPubkey = await sageGameHandler.getFleetAddress(
-    playerProfilePubkey,
-    fleetName
-  );
+  const { sageGameHandler, sageFleetHandler } = await sageProvider();
 
   console.log(" ");
   console.log(`Loading ${amount} ${resourceName} to fleet cargo...`);
 
   const mintToken = sageGameHandler.getResourceMintAddress(resourceName);
 
-  try {
-    let ix = await sageFleetHandler.ixDepositCargoToFleet(
-      fleetPubkey,
-      mintToken,
-      amount
-    );
-    if (ix.type == "FleetCargoIsFull") {
+  let ix = await sageFleetHandler.ixDepositCargoToFleet(
+    fleetPubkey,
+    mintToken,
+    amount
+  );
+  switch (ix.type) {
+    case "FleetCargoIsFull":
       console.log("Your fleet cargo is full");
       return;
-    } else if (ix.type == "StarbaseCargoPodTokenAccountNotFound") {
-      console.log("Not enough resources in starbase");
-      return;
-    } else if (ix.type != "Success") throw new Error(ix.type);
+    default:
+      if (ix.type !== "Success") {
+        throw new Error(ix.type);
+      }
+  }
 
-    let tx = await sageGameHandler.buildAndSignTransaction(ix.ixs);
-
-    let rx = await sageGameHandler.sendTransaction(tx);
-    if (!rx.value.isOk()) throw Error("FleetFailedToLoadCargo");
-
+  try {
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    await sendTransactionAndCheck(tx, "Fleet failed to load cargo");
     console.log("Fleet cargo loaded!");
+    await sageGameHandler.getQuattrinoBalance();
   } catch (e) {
     throw e;
   }

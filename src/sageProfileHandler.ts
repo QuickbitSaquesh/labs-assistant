@@ -2,7 +2,7 @@ import { PublicKey } from "@solana/web3.js";
 import { readFromRPCOrError } from "@staratlas/data-source";
 import { PlayerProfile } from "@staratlas/player-profile";
 
-import { SageGameHandler } from "./sageGameHandler";
+import { SageGameHandler } from "./SageGameHandler";
 
 export class SageProfileHandler {
   constructor(private _gameHandler: SageGameHandler) {}

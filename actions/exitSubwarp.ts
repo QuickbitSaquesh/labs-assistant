@@ -1,30 +1,23 @@
+import { PublicKey } from "@solana/web3.js";
 import { sageProvider } from "../utils/sageProvider";
+import { buildAndSignTransactionAndCheck } from "../utils/transactions/buildAndSignTransactionAndCheck";
+import { sendTransactionAndCheck } from "../utils/transactions/sendTransactionAndCheck";
 
-export const exitSubwarp = async (fleetName: string) => {
-  const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
-    await sageProvider();
+export const exitSubwarp = async (fleetPubkey: PublicKey) => {
+  const { sageGameHandler, sageFleetHandler } = await sageProvider();
 
-  const fleetPubkey = await sageGameHandler.getFleetAddress(
-    playerProfilePubkey,
-    fleetName
-  );
-
-  // Get the fleet account
-  let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
-
-  // Check that the fleet is warping, abort if not
-  if (!fleetAccount.state.MoveSubwarp) return;
-
-  // Instruct the fleet to exit subwarp
   let ix = await sageFleetHandler.ixReadyToExitSubwarp(fleetPubkey);
-  let tx = await sageGameHandler.buildAndSignTransaction(ix);
-  let rx = await sageGameHandler.sendTransaction(tx);
-
-  // Check that the transaction was a success, if not abort
-  if (!rx.value.isOk()) {
-    throw Error("Fleet failed to exit subwarp");
+  if (ix.type !== "Success") {
+    throw new Error(ix.type);
   }
 
-  console.log(" ");
-  console.log(`Exit subwarp completed!`);
+  try {
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    await sendTransactionAndCheck(tx, "Fleet failed to exit subwarp");
+    console.log(" ");
+    console.log(`Exit subwarp completed!`);
+    await sageGameHandler.getQuattrinoBalance();
+  } catch (e) {
+    throw e;
+  }
 };

@@ -1,30 +1,30 @@
+import { PublicKey } from "@solana/web3.js";
 import { sageProvider } from "../utils/sageProvider";
+import { buildAndSignTransactionAndCheck } from "../utils/transactions/buildAndSignTransactionAndCheck";
+import { sendTransactionAndCheck } from "../utils/transactions/sendTransactionAndCheck";
 
-export const loadAmmo = async (fleetName: string, ammoAmount: number) => {
-  const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
-    await sageProvider();
-
-  // Get fleet public key
-  let fleetPubkey = await sageGameHandler.getFleetAddress(
-    playerProfilePubkey,
-    fleetName
-  );
+export const loadAmmo = async (fleetPubkey: PublicKey, ammoAmount: number) => {
+  const { sageGameHandler, sageFleetHandler } = await sageProvider();
 
   console.log(" ");
   console.log("Loading ammo to fleet...");
 
+  let ix = await sageFleetHandler.ixRearmFleet(fleetPubkey, ammoAmount);
+  switch (ix.type) {
+    case "FleetAmmoBankIsFull":
+      console.log("Your fleet ammo bank is already full");
+      return;
+    default:
+      if (ix.type !== "Success") {
+        throw new Error(ix.type);
+      }
+  }
+
   try {
-    let ix = await sageFleetHandler.ixRearmFleet(fleetPubkey, ammoAmount);
-    if (!ix) return;
-    let tx = await sageGameHandler.buildAndSignTransaction(ix);
-    let rx = await sageGameHandler.sendTransaction(tx);
-
-    // Check that the transaction was a success, if not abort
-    if (!rx.value.isOk()) {
-      throw Error("Fleet failed to load ammo");
-    }
-
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    await sendTransactionAndCheck(tx, "Fleet failed to load ammo");
     console.log("Fleet ammo loaded!");
+    await sageGameHandler.getQuattrinoBalance();
   } catch (e) {
     throw e;
   }

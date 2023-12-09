@@ -1,5 +1,5 @@
 import { Connection, Keypair } from "@solana/web3.js";
-import { SageGameHandler } from "..";
+import { SageGameHandler } from "../src/SageGameHandler";
 
 export const setupSageGameHandlerReadyAndLoadGame = async (
   walletKeypair: Keypair,

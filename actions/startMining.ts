@@ -1,38 +1,34 @@
-import { Resources } from "../common/resources";
+import { PublicKey } from "@solana/web3.js";
+import { wait } from "../utils/actions/wait";
 import { sageProvider } from "../utils/sageProvider";
+import { buildAndSignTransactionAndCheck } from "../utils/transactions/buildAndSignTransactionAndCheck";
+import { sendTransactionAndCheck } from "../utils/transactions/sendTransactionAndCheck";
 
 export const startMining = async (
-  fleetName: string,
-  resource: Resources,
+  fleetPubkey: PublicKey,
+  resource: string,
   time: number
 ) => {
-  const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
-    await sageProvider();
+  const { sageGameHandler, sageFleetHandler } = await sageProvider();
 
-  // Get fleet public key
-  let fleetPubkey = await sageGameHandler.getFleetAddress(
-    playerProfilePubkey,
-    fleetName
-  );
+  console.log(" ");
+  console.log(`Start mining ${resource}...`);
 
-  // Get the fleet account
-  let fleetAccount = await sageFleetHandler.getFleetAccount(fleetPubkey);
+  let ix = await sageFleetHandler.ixStartMining(fleetPubkey, resource);
+  if (ix.type !== "Success") {
+    throw new Error(ix.type);
+  }
 
-  if (fleetAccount.state.Idle) {
-    console.log(" ");
-    console.log(`Start mining ${resource}...`);
-
-    // Instruct the fleet to start mining
-    let ix = await sageFleetHandler.ixStartMining(fleetPubkey, resource);
-    let tx = await sageGameHandler.buildAndSignTransaction(ix);
-    let rx = await sageGameHandler.sendTransaction(tx);
-
-    // Check that the transaction was a success, if not abort
-    if (!rx.value.isOk()) {
-      throw Error(`Fleet failed to start mining ${resource}`);
-    }
-
+  try {
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    await sendTransactionAndCheck(
+      tx,
+      `Fleet failed to start mining ${resource}`
+    );
     console.log(`Mining started! Waiting for ${time} seconds...`);
-    await new Promise((resolve) => setTimeout(resolve, time * 1000));
+    await sageGameHandler.getQuattrinoBalance();
+    await wait(time);
+  } catch (e) {
+    throw e;
   }
 };

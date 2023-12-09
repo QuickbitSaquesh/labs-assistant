@@ -1,6 +1,6 @@
 import { BN } from "@project-serum/anchor";
-import { StarbaseData } from "../common/types";
-import { sageProvider } from "./sageProvider";
+import { StarbaseData } from "../../common/types";
+import { sageProvider } from "../sageProvider";
 
 export const getStarbaseDataByCoords = async (
   coordinates: [BN, BN]

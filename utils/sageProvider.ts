@@ -1,4 +1,4 @@
-import { SageFleetHandler } from "..";
+import { SageFleetHandler } from "../src/SageFleetHandler";
 import { setupSageGameHandlerReadyAndLoadGame } from "./setupSageGameHandlerReadyAndLoadGame";
 import { setupWallet } from "./setupWallet";
 
@@ -17,13 +17,6 @@ export const sageProvider = async () => {
   const playerProfilePubkey = await sageGameHandler.getPlayerProfileAddress(
     playerPubkey
   );
-
-  /* // Get the fleet public key
-  const fleetPubkey = sageGameHandler.getFleetAddress(
-    playerProfilePubkey,
-    fleetName
-  );
-  console.log(`Fleet address: ${fleetPubkey.toBase58()}`); */
 
   return {
     sageGameHandler,

@@ -1,5 +1,9 @@
 import { AnchorProvider, BN, Program, Wallet } from "@project-serum/anchor";
-import { Account as TokenAccount } from "@solana/spl-token";
+import {
+  Account as TokenAccount,
+  createBurnInstruction,
+  getAssociatedTokenAddressSync,
+} from "@solana/spl-token";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import bs58 from "bs58";
 
@@ -7,7 +11,6 @@ import { CARGO_IDL, CargoIDLProgram, CargoType } from "@staratlas/cargo";
 import {
   AsyncSigner,
   InstructionReturn,
-  TransactionReturn,
   buildAndSignTransaction,
   keypairToAsyncSigner,
   readFromRPCOrError,
@@ -40,6 +43,8 @@ import {
   getCargoPodsByAuthority,
   getOrCreateAssociatedTokenAccount,
 } from "@staratlas/sage";
+import { quattrinoTokenPubkey } from "../common/constants";
+import { SectorCoordinates } from "../common/types";
 
 const findGame = async (provider: AnchorProvider) => {
   const program = await sageProgram(provider);
@@ -262,7 +267,7 @@ export class SageGameHandler {
     return mineItem;
   }
 
-  async getPlanetAddress(coordinates: [BN, BN]) {
+  getPlanetAddress(coordinates: SectorCoordinates) {
     if (!this.planetLookup) {
       throw Error("this.planetLookup not set");
     }
@@ -336,13 +341,16 @@ export class SageGameHandler {
   }
 
   async getCargoPodsByAuthority(authority: PublicKey) {
-    const cargoPods = getCargoPodsByAuthority(
-      this.provider.connection,
-      this.cargoProgram,
-      authority
-    );
-
-    return cargoPods;
+    try {
+      const cargoPods = await getCargoPodsByAuthority(
+        this.provider.connection,
+        this.cargoProgram,
+        authority
+      );
+      return { type: "Success" as const, cargoPods };
+    } catch (e) {
+      return { type: "CargoPodsNotFound" as const };
+    }
   }
 
   async getOrCreateAssociatedTokenAccount(mint: PublicKey, owner: PublicKey) {
@@ -426,32 +434,104 @@ export class SageGameHandler {
     );
   }
 
-  async getParsedTokenAccountsByOwner(
-    owner: PublicKey
-  ): Promise<TokenAccount[]> {
-    return betterGetTokenAccountsByOwner(this.connection, owner);
+  async getParsedTokenAccountsByOwner(owner: PublicKey) {
+    try {
+      const tokenAccounts = (await betterGetTokenAccountsByOwner(
+        this.connection,
+        owner
+      )) as TokenAccount[];
+      return { type: "Success" as const, tokenAccounts };
+    } catch (e) {
+      return { type: "TokenAccountsNotFound" as const };
+    }
+  }
+
+  burnQuattrinoToken() {
+    const fromATA = getAssociatedTokenAddressSync(
+      quattrinoTokenPubkey,
+      this.funder.publicKey()
+    );
+
+    const ix = createBurnInstruction(
+      fromATA,
+      quattrinoTokenPubkey,
+      this.funder.publicKey(),
+      1
+    );
+
+    const iws: InstructionReturn = async (funder) => ({
+      instruction: ix,
+      signers: [funder],
+    });
+
+    return iws;
+  }
+
+  async getQuattrinoBalance() {
+    try {
+      const fromATA = getAssociatedTokenAddressSync(
+        quattrinoTokenPubkey,
+        this.funder.publicKey()
+      );
+      const tokenBalance =
+        await this.provider.connection.getTokenAccountBalance(fromATA);
+
+      console.log(`You have ${tokenBalance.value.amount} QTR`);
+      return {
+        type: "Success" as const,
+        tokenBalance: tokenBalance.value.uiAmount,
+      };
+    } catch (e) {
+      console.log("Unable to fetch QTR balance");
+      return { type: "UnableToLoadBalance" as const };
+    }
   }
 
   async buildAndSignTransaction(
     instructions: InstructionReturn | InstructionReturn[]
   ) {
-    return await buildAndSignTransaction(instructions, this.funder, {
-      connection: this.connection,
-    });
+    try {
+      const fromATA = getAssociatedTokenAddressSync(
+        quattrinoTokenPubkey,
+        this.funder.publicKey()
+      );
+      const tokenBalance =
+        await this.provider.connection.getTokenAccountBalance(fromATA);
+      if (tokenBalance.value.uiAmount === 0)
+        return { type: "NoEnoughTokensToPerformLabsAction" as const };
+    } catch (e) {
+      return { type: "NoEnoughTokensToPerformLabsAction" as const };
+    }
+
+    const ixs = Array.isArray(instructions) ? instructions : [instructions];
+    ixs.push(this.burnQuattrinoToken());
+
+    try {
+      const stx = await buildAndSignTransaction(instructions, this.funder, {
+        connection: this.connection,
+      });
+      return { type: "Success" as const, stx };
+    } catch (e) {
+      return { type: "BuildAndSignTransactionError" as const };
+    }
   }
 
   async sendTransaction(tx: TransactionReturn) {
-    // TODO: handle errors
-    // https://build.staratlas.com/dev-resources/apis-and-data/data-source
-    //
-    // Convert the error code from Hex to decimal so 0xbc4 becomes 3012.
-    // Any error code <6000 is an anchor error and can use anchor.so/errors
-    // to see what the error is. Any error code >=6000 is a Sage error and
-    // can be found in the IDL
-    //
-    // const hexString = '0x1782';
-    // const decimal = parseInt(hexString, 16)
-    // console.log('Error:', decimal);
-    return await sendTransaction(tx, this.connection);
+    const result = await sendTransaction(tx, this.connection, {
+      commitment: "confirmed",
+      sendOptions: {
+        skipPreflight: false,
+      },
+    });
+
+    if (result.value.isErr()) {
+      return {
+        type: "SendTransactionFailed" as const,
+        result: result.value.error,
+      };
+    }
+
+    const txSignature = result.value.value;
+    return { type: "Success" as const, result: txSignature };
   }
 }

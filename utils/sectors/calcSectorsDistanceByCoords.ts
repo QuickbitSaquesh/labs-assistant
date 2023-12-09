@@ -1,4 +1,4 @@
-import { SectorCoordinates } from "../common/types";
+import { SectorCoordinates } from "../../common/types";
 export const calcSectorsDistanceByCoords = (
   sectorFrom: SectorCoordinates,
   sectorTo: SectorCoordinates

@@ -1,7 +1,7 @@
 import inquirer from "inquirer";
-import { StarbaseInfo, StarbaseInfoKey } from "../common/starbases";
+import { StarbaseInfo, StarbaseInfoKey } from "../../common/starbases";
 
-export const getStarbaseDestination = async (
+export const setStarbase = async (
   currentStarbase: StarbaseInfoKey,
   excludeCurrentStarbase?: boolean
 ): Promise<StarbaseInfoKey> => {
@@ -22,8 +22,7 @@ export const getStarbaseDestination = async (
     },
   ]);
 
-  const starbaseDestination =
-    starbaseAnswer.starbaseDestination as StarbaseInfoKey;
+  const starbase = starbaseAnswer.starbaseDestination as StarbaseInfoKey;
 
-  return starbaseDestination;
+  return starbase;
 };

@@ -1,6 +1,8 @@
-import { NotificationMessage } from "../common/notifications";
-import { LabsAction } from "../common/types";
+import { NoEnoughTokensToPerformLabsAction } from "../../common/errors";
+import { NotificationMessage } from "../../common/notifications";
+import { LabsAction } from "../../common/types";
 import { sendNotification } from "./sendNotification";
+import { wait } from "./wait";
 
 // If a SAGE Labs action fails, send a notification and retry the same action every minute
 export async function actionWrapper<R, A extends any[]>(
@@ -10,10 +12,11 @@ export async function actionWrapper<R, A extends any[]>(
   while (true) {
     try {
       return await func(...args);
-    } catch (error) {
-      console.error(`Attempt failed:`, error);
+    } catch (e) {
+      if (e instanceof NoEnoughTokensToPerformLabsAction) throw e;
+      console.error(`Attempt failed:`, e);
       sendNotification(NotificationMessage.FAIL_WARNING);
-      await new Promise((resolve) => setTimeout(resolve, 60000));
+      await wait(60);
     }
   }
 }

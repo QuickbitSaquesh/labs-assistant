@@ -1,3 +1,5 @@
+import { byteArrayToString } from "@staratlas/data-source";
+import { Fleet } from "@staratlas/sage";
 import { dockToStarbase } from "../actions/dockToStarbase";
 import { exitSubwarp } from "../actions/exitSubwarp";
 import { loadAmmo } from "../actions/loadAmmo";
@@ -12,72 +14,80 @@ import { MAX_AMOUNT } from "../common/constants";
 import { NotificationMessage } from "../common/notifications";
 import { Resource } from "../common/resources";
 import { SectorCoordinates } from "../common/types";
-import { actionWrapper } from "../utils/actionWrapper";
-import { calcSectorsDistanceByCoords } from "../utils/calcSectorsDistanceByCoords";
-import { inputForMining } from "../utils/inputForMining";
-import { prepareForMining } from "../utils/prepareForMining";
-import { sendNotification } from "../utils/sendNotification";
+import { actionWrapper } from "../utils/actions/actionWrapper";
+import { sendNotification } from "../utils/actions/sendNotification";
+import { getTimeAndNeededResourcesToFullCargoInMining } from "../utils/fleets/getTimeAndNeededResourcesToFullCargoInMining";
+import { setMiningInputs } from "../utils/inputs/setMiningInputs";
+import { calcSectorsDistanceByCoords } from "../utils/sectors/calcSectorsDistanceByCoords";
 
-const run = async () => {
-  const { fleetName, fleetData, resourceToMine, sectorTo } =
-    await inputForMining();
+export const mining = async (fleet: Fleet, position: SectorCoordinates) => {
+  // 1. prendere in input tutti i dati necessari per il mining di una risorsa
+  // - dove vuoi minare
+  // - quale risorsa vuoi minare
+  const { starbase, resourceToMine } = await setMiningInputs(position);
 
-  const miningTimeAndResourcesAmount = !sectorTo
-    ? await prepareForMining(
-        fleetName,
-        Resource[resourceToMine],
-        fleetData.currentSector
+  // 2. calcolare tutti i dati necessari correlati agli input
+  const fleetPubkey = fleet.key;
+  const fleetName = byteArrayToString(fleet.data.fleetLabel);
+
+  const miningTimeAndResourcesAmount = !starbase
+    ? await getTimeAndNeededResourcesToFullCargoInMining(
+        fleet,
+        resourceToMine,
+        position
       )
-    : await prepareForMining(fleetName, Resource[resourceToMine], sectorTo);
+    : await getTimeAndNeededResourcesToFullCargoInMining(
+        fleet,
+        resourceToMine,
+        starbase
+      );
+  if (miningTimeAndResourcesAmount.type !== "Success")
+    return miningTimeAndResourcesAmount;
 
   const distanceCoords =
-    sectorTo && calcSectorsDistanceByCoords(fleetData.currentSector, sectorTo);
+    starbase && calcSectorsDistanceByCoords(position, starbase);
 
   const reverseDistanceCoords =
     distanceCoords &&
     (distanceCoords.map((item) => item.neg()) as SectorCoordinates);
 
+  // 3. avviare l'automazione utilizzando i dati forniti dall'utente
   while (true) {
     try {
-      await actionWrapper(loadFuel, fleetName, MAX_AMOUNT);
-      await actionWrapper(loadAmmo, fleetName, MAX_AMOUNT);
+      await actionWrapper(loadFuel, fleetPubkey, MAX_AMOUNT);
+      await actionWrapper(loadAmmo, fleetPubkey, MAX_AMOUNT);
       await actionWrapper(
         loadCargo,
-        fleetName,
+        fleetPubkey,
         Resource.Food,
         miningTimeAndResourcesAmount.food
       );
-      await actionWrapper(undockFromStarbase, fleetName);
-      if (sectorTo && distanceCoords) {
-        await actionWrapper(subwarpToSector, fleetName, distanceCoords);
-        await actionWrapper(exitSubwarp, fleetName);
+      await actionWrapper(undockFromStarbase, fleetPubkey);
+      if (starbase && distanceCoords) {
+        await actionWrapper(subwarpToSector, fleetPubkey, distanceCoords);
+        await actionWrapper(exitSubwarp, fleetPubkey);
       }
       await actionWrapper(
         startMining,
-        fleetName,
-        Resource[resourceToMine],
+        fleetPubkey,
+        resourceToMine,
         miningTimeAndResourcesAmount.timeInSeconds
       );
-      await actionWrapper(stopMining, fleetName, Resource[resourceToMine]);
-      if (sectorTo && reverseDistanceCoords) {
-        await actionWrapper(subwarpToSector, fleetName, reverseDistanceCoords);
-        await actionWrapper(exitSubwarp, fleetName);
+      await actionWrapper(stopMining, fleetPubkey, resourceToMine);
+      if (starbase && reverseDistanceCoords) {
+        await actionWrapper(
+          subwarpToSector,
+          fleetPubkey,
+          reverseDistanceCoords
+        );
+        await actionWrapper(exitSubwarp, fleetPubkey);
       }
-      await actionWrapper(dockToStarbase, fleetName);
-      await actionWrapper(
-        unloadCargo,
-        fleetName,
-        Resource[resourceToMine],
-        MAX_AMOUNT
-      );
+      await actionWrapper(dockToStarbase, fleetPubkey);
+      await actionWrapper(unloadCargo, fleetPubkey, resourceToMine, MAX_AMOUNT);
       await sendNotification(NotificationMessage.MINING_SUCCESS, fleetName);
     } catch (e) {
       await sendNotification(NotificationMessage.MINING_ERROR, fleetName);
+      break;
     }
   }
 };
-
-run().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});

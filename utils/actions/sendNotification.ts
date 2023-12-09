@@ -1,5 +1,5 @@
-import { NotificationMessage } from "../common/notifications";
-import { ResourceType } from "../common/resources";
+import { NotificationMessage } from "../../common/notifications";
+import { ResourceType } from "../../common/resources";
 
 export const sendNotification = async (
   notification: NotificationMessage,

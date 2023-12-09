@@ -1,39 +1,36 @@
 import { BN } from "@project-serum/anchor";
+import { PublicKey } from "@solana/web3.js";
 import { ResourceType } from "../common/resources";
 import { sageProvider } from "../utils/sageProvider";
+import { buildAndSignTransactionAndCheck } from "../utils/transactions/buildAndSignTransactionAndCheck";
+import { sendTransactionAndCheck } from "../utils/transactions/sendTransactionAndCheck";
 
 export const unloadCargo = async (
-  fleetName: string,
+  fleetPubkey: PublicKey,
   resourceName: ResourceType,
   amount: BN
 ) => {
-  const { sageGameHandler, sageFleetHandler, playerProfilePubkey } =
-    await sageProvider();
-
-  const fleetPubkey = await sageGameHandler.getFleetAddress(
-    playerProfilePubkey,
-    fleetName
-  );
+  const { sageGameHandler, sageFleetHandler } = await sageProvider();
 
   console.log(" ");
   console.log(`Unloading ${amount} ${resourceName} from fleet cargo...`);
 
   const mintToken = sageGameHandler.getResourceMintAddress(resourceName);
 
+  let ix = await sageFleetHandler.ixWithdrawCargoFromFleet(
+    fleetPubkey,
+    mintToken,
+    amount
+  );
+  if (ix.type !== "Success") {
+    throw new Error(ix.type);
+  }
+
   try {
-    let ix = await sageFleetHandler.ixWithdrawCargoFromFleet(
-      fleetPubkey,
-      mintToken,
-      amount
-    );
-    if (ix.type != "Success") throw new Error(ix.type);
-
-    let tx = await sageGameHandler.buildAndSignTransaction(ix.ixs);
-
-    let rx = await sageGameHandler.sendTransaction(tx);
-    if (!rx.value.isOk()) throw Error("FleetFailedToUnloadCargo");
-
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    await sendTransactionAndCheck(tx, "Fleet failed to unload cargo");
     console.log("Fleet cargo unloaded!");
+    await sageGameHandler.getQuattrinoBalance();
   } catch (e) {
     throw e;
   }

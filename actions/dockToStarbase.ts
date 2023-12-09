@@ -15,7 +15,7 @@ export const dockToStarbase = async (fleetPubkey: PublicKey) => {
   }
 
   try {
-    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs, true);
     await sendTransactionAndCheck(tx, "Fleet failed to dock to starbase");
     console.log("Fleet docked!");
     await sageGameHandler.getQuattrinoBalance();

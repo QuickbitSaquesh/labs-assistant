@@ -21,7 +21,7 @@ export const loadFuel = async (fleetPubkey: PublicKey, fuelAmount: number) => {
   }
 
   try {
-    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs, true);
     await sendTransactionAndCheck(tx, "Fleet failed to load fuel");
 
     console.log("Fleet fuel loaded!");

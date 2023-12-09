@@ -6,11 +6,12 @@ import {
 import { sageProvider } from "../sageProvider";
 
 export const buildAndSignTransactionAndCheck = async (
-  ix: InstructionReturn[]
+  ix: InstructionReturn[],
+  fee: boolean
 ) => {
   const { sageGameHandler } = await sageProvider();
 
-  let tx = await sageGameHandler.buildAndSignTransaction(ix);
+  let tx = await sageGameHandler.buildAndSignTransaction(ix, fee);
 
   if (tx.type !== "Success") {
     switch (tx.type) {

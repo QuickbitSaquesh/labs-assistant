@@ -18,7 +18,7 @@ export const unloadFuel = async (
   }
 
   try {
-    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs, true);
     await sendTransactionAndCheck(tx, "Fleet failed to unload fuel");
     console.log("Fleet fuel unloaded!");
     await sageGameHandler.getQuattrinoBalance();

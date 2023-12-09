@@ -1,8 +1,5 @@
 import { BN } from "@project-serum/anchor";
-import {
-  getAssociatedTokenAddress,
-  getAssociatedTokenAddressSync,
-} from "@solana/spl-token";
+import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import {
   InstructionReturn,
@@ -15,22 +12,16 @@ import {
   Fleet,
   LoadingBayToIdleInput,
   MineItem,
-  MiscStats,
   Planet,
   Resource,
-  ScanForSurveyDataUnitsInput,
   Sector,
   ShipStats,
   Starbase,
   StartMiningAsteroidInput,
   StartSubwarpInput,
   StopMiningAsteroidInput,
-  SurveyDataUnitTracker,
-  WarpToCoordinateInput,
-  getOrCreateAssociatedTokenAccount,
 } from "@staratlas/sage";
 
-import { NoEnoughRepairKits } from "../common/errors";
 import { SectorCoordinates } from "../common/types";
 import { checkConnectionAndGameState } from "../utils/instructions/checkConnectionAndGameState";
 import { SageGameHandler } from "./SageGameHandler";
@@ -129,7 +120,7 @@ export class SageFleetHandler {
   }
 
   // FIX
-  async ixScanForSurveyDataUnits(fleetPubkey: PublicKey) {
+  /* async ixScanForSurveyDataUnits(fleetPubkey: PublicKey) {
     if (!this._gameHandler.provider.connection)
       throw new Error("RPCConnectionError");
     if (!this._gameHandler.game) throw Error("GameIsNotLoaded");
@@ -226,7 +217,7 @@ export class SageFleetHandler {
 
     ixs.push(ix_1);
     return { type: "ScanInstructionReady" as const, ixs };
-  }
+  } */
 
   // OK
   async ixDockToStarbase(fleetPubkey: PublicKey) {
@@ -1207,7 +1198,7 @@ export class SageFleetHandler {
       this._gameHandler.getProfileFactionAddress(playerProfilePubkey);
 
     // This PDA account is the owner of all the resources in the fleet's cargo (Fleet Cargo Holds - Stiva della flotta)
-    const fleetAmmoBankPubkey = fleetAccount.data.ammoBank;
+    const fleetAmmoBankPubkey = fleetAccount.fleet.data.ammoBank;
     const tokenAccountsFrom =
       await this._gameHandler.getParsedTokenAccountsByOwner(
         fleetAmmoBankPubkey
@@ -1290,7 +1281,7 @@ export class SageFleetHandler {
   }
 
   // FIX
-  async ixWarpToCoordinate(
+  /* async ixWarpToCoordinate(
     fleetPubkey: PublicKey,
     coordinates: [BN, BN]
   ): Promise<InstructionReturn[]> {
@@ -1351,10 +1342,10 @@ export class SageFleetHandler {
     ixs.push(ix_1);
 
     return ixs;
-  }
+  } */
 
   // FIX
-  async ixReadyToExitWarp(
+  /* async ixReadyToExitWarp(
     fleetPubkey: PublicKey
   ): Promise<InstructionReturn[]> {
     const ixs: InstructionReturn[] = [];
@@ -1364,7 +1355,7 @@ export class SageFleetHandler {
     ixs.push(ix_1);
 
     return ixs;
-  }
+  } */
 
   // OK
   async getTimeToSubwarp(

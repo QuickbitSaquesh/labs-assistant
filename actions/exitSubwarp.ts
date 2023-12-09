@@ -12,7 +12,7 @@ export const exitSubwarp = async (fleetPubkey: PublicKey) => {
   }
 
   try {
-    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs, false);
     await sendTransactionAndCheck(tx, "Fleet failed to exit subwarp");
     console.log(" ");
     console.log(`Exit subwarp completed!`);

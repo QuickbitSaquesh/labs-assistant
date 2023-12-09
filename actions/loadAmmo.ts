@@ -21,7 +21,7 @@ export const loadAmmo = async (fleetPubkey: PublicKey, ammoAmount: number) => {
   }
 
   try {
-    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs, true);
     await sendTransactionAndCheck(tx, "Fleet failed to load ammo");
     console.log("Fleet ammo loaded!");
     await sageGameHandler.getQuattrinoBalance();

@@ -15,7 +15,7 @@ export const stopMining = async (fleetPubkey: PublicKey, resource: string) => {
   }
 
   try {
-    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs, false);
     await sendTransactionAndCheck(tx, "Fleet failed to stop mining");
     console.log(`Mining stopped!`);
     await sageGameHandler.getQuattrinoBalance();

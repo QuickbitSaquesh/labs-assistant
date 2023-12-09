@@ -9,7 +9,7 @@ export const scan = async (fleetPubkey: PublicKey) => {
 
   try {
     let ix = await sageFleetHandler.ixScanForSurveyDataUnits(fleetPubkey);
-    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs, true);
     let rx = await sendTransactionAndCheck(tx);
     if (!rx.value.isOk()) {
       switch (ix.type) {

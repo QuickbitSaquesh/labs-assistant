@@ -14,7 +14,7 @@ export const exitWarp = async (fleetPubkey: PublicKey) => {
   // Instruct the fleet to exit warp
   let ix = await sageFleetHandler.ixReadyToExitWarp(fleetPubkey);
   if (!ix) return;
-  let tx = await buildAndSignTransactionAndCheck(ix);
+  let tx = await buildAndSignTransactionAndCheck(ix, true);
   await sendTransactionAndCheck(tx, "Fleet failed to exit warp");
 
   console.log(" ");

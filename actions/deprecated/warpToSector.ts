@@ -46,7 +46,7 @@ export const warpToSector = async (
 
   // Instruct the fleet to warp to coordinate
   let ix = await sageFleetHandler.ixWarpToCoordinate(fleetPubkey, sectorTo);
-  let tx = await buildAndSignTransactionAndCheck(ix);
+  let tx = await buildAndSignTransactionAndCheck(ix, true);
   let rx = await sendTransactionAndCheck(tx, "Fleet failed to warp");
 
   console.log(`Waiting for ${time} seconds...`);

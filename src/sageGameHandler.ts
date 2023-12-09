@@ -173,7 +173,7 @@ export class SageGameHandler {
       this.gameId = game.publicKey;
       this.gameState = game.account.gameState;
       this.cargoStatsDefinition = game.account.cargo.statsDefinition;
-      this.cargoStatsDefinitionSeqId = 1; // TODO: note this could change if updated by team, would need to look-up new value in Cargo program
+      this.cargoStatsDefinitionSeqId = 1;
       this.craftingDomain = game.account.crafting.domain;
       this.mints = game.account.mints;
 
@@ -488,23 +488,26 @@ export class SageGameHandler {
   }
 
   async buildAndSignTransaction(
-    instructions: InstructionReturn | InstructionReturn[]
+    instructions: InstructionReturn | InstructionReturn[],
+    fee: boolean
   ) {
-    try {
-      const fromATA = getAssociatedTokenAddressSync(
-        quattrinoTokenPubkey,
-        this.funder.publicKey()
-      );
-      const tokenBalance =
-        await this.provider.connection.getTokenAccountBalance(fromATA);
-      if (tokenBalance.value.uiAmount === 0)
+    if (fee) {
+      try {
+        const fromATA = getAssociatedTokenAddressSync(
+          quattrinoTokenPubkey,
+          this.funder.publicKey()
+        );
+        const tokenBalance =
+          await this.provider.connection.getTokenAccountBalance(fromATA);
+        if (tokenBalance.value.uiAmount === 0)
+          return { type: "NoEnoughTokensToPerformLabsAction" as const };
+      } catch (e) {
         return { type: "NoEnoughTokensToPerformLabsAction" as const };
-    } catch (e) {
-      return { type: "NoEnoughTokensToPerformLabsAction" as const };
-    }
+      }
 
-    const ixs = Array.isArray(instructions) ? instructions : [instructions];
-    ixs.push(this.burnQuattrinoToken());
+      const ixs = Array.isArray(instructions) ? instructions : [instructions];
+      ixs.push(this.burnQuattrinoToken());
+    }
 
     try {
       const stx = await buildAndSignTransaction(instructions, this.funder, {

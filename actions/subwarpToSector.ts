@@ -23,7 +23,7 @@ export const subwarpToSector = async (
   }
 
   try {
-    let tx = await buildAndSignTransactionAndCheck(ix.ixs);
+    let tx = await buildAndSignTransactionAndCheck(ix.ixs, true);
     await sendTransactionAndCheck(tx, "Fleet failed to subwarp");
     console.log(`Waiting for ${ix.timeToSubwarp} seconds...`);
     await sageGameHandler.getQuattrinoBalance();

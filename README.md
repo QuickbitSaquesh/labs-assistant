@@ -1,4 +1,5 @@
-# labs-assistant
+# labs-assistant Quick Prospector
 
-this fork suggest some fix and rapresents a personal customization
+This fork suggest few fixes and is a personal customization
+
 Q.

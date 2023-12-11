@@ -16,7 +16,7 @@ import { prepareForMining } from "../utils/prepareForMining";
 import { sendNotification } from "../utils/sendNotification";
 
 const run = async () => {
-  const fleetName = "CesenaLama";
+  const fleetName = "Miner";
   const miningTimeAndResourcesAmount = await prepareForMining(
     fleetName,
     Resources.CopperOre,
